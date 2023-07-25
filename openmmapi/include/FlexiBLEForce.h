@@ -15,6 +15,7 @@
 #include "openmm/Context.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include <map>
+#include <algorithm>
 #include <vector>
 
 // using namespace OpenMM;
@@ -34,37 +35,63 @@ namespace FlexiBLE
         }
         int getNumParticles() const
         {
-            return particles.size();
+            int NumParticles = 0;
+            for (int i = 0; i < QMMolecules.size(); i++)
+            {
+                for (int j = 0; j < QMMolecules[i].size(); j++)
+                {
+                    NumParticles += (int)QMMolecules[i][j].AtomIndices.size();
+                }
+            }
+            for (int i = 0; i < MMMolecules.size(); i++)
+            {
+                for (int j = 0; j < MMMolecules[i].size(); j++)
+                {
+                    NumParticles += (int)MMMolecules[i][j].AtomIndices.size();
+                }
+            }
+            return NumParticles;
         }
-
-        void updateParameteresInContext(Context &context);
-        void setQM_MMMolecules();
+        /**
+         * This function divides particles into QM particles and MM particles, then load
+         * the information into those two private vectors.
+         * It takes a vector that contains the indices of all QM indice, and a vector that
+         * records all initial indices of each kind molecule. For instance, if there are three
+         * kinds of molecules A, B and C, and they have 100, 200 and 300 individuals, then the
+         * vector contains elements 0, 99 and 299.
+         */
+        void GroupingMolecules(OpenMM::System &system, OpenMM::State &state, OpenMM::Context &context, std::vector<int> QMIndices, std::vector<int> MoleculeInit);
+        /**
+         * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
+         * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
+         * Simply call setBondParameters() to modify this object's parameters, then call updateParametersInState()
+         * to copy them over to the Context.
+         *
+         * The only information this method updates is the values of per-bond parameters.  The set of particles involved
+         * in a bond cannot be changed, nor can new bonds be added.
+         */
+        void updateParametersInContext(OpenMM::Context &context);
 
     protected:
         OpenMM::ForceImpl *createImpl() const;
 
     private:
         class MoleculeInfo;
-        std::vector<MoleculeInfo> QMMolecules; // Info for QM molecules
-        std::vector<MoleculeInfo> MMMolecules; // Info for MM molecules
-        class ParticleInfo;
-        std::vector<ParticleInfo> QMParticles; // Info for QM particles
-        std::vector<ParticleInfo> MMParticles; // Info for MM particles
+        std::vector<std::vector<MoleculeInfo>> QMMolecules;
+        std::vector<std::vector<MoleculeInfo>> MMMolecules;
     };
 
     /**
-     * This is an internal class used to record information about a scaling parameter.
+     * This is an internal class used to record information about what particles (indices) are in a molecular.
      * @private
      */
-    class FlexiBLEForce::ParticleInfo
+    class FlexiBLEForce::MoleculeInfo
     {
     public:
-        const double dim = 3;
-        double position[dim];
-        const bool ifQM; // True for Quantum particles, False for MM particles.
-        ParticleInfo(double x, double y, double z, bool ParticleGroup) : position[0](x), position[1](y), position[2](z), ifQM(ParticleGroup) {}
-
-        // If belong to QM particle, both ParticleGroup and ifQM are true, otherwise both of them are false.
+        std::vector<int> AtomIndices;
+        std::vector<OpenMM::Vec3> AtomPositions;
+        std::vector<double> AtomMasses;
+        MoleculeInfo(const std::vector<int> input) : AtomIndices(input) {}
     };
 
 } // namespace FlexiBLE
