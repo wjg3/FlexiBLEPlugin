@@ -35,7 +35,7 @@ SET(PLUGIN_SOURCE_SUBDIRS openmmapi serialization)
 
 # Set the library name
 SET(PLUGIN_LIBRARY_NAME FlexiBLE)
-SET(SHARED_NONBONDED_SLICING_TARGET ${PLUGIN_LIBRARY_NAME})
+SET(SHARED_FLEXIBLE_TARGET ${PLUGIN_LIBRARY_NAME})
 
 # These are all the places to search for header files which are to be part of the API.
 SET(API_INCLUDE_DIRS "openmmapi/include")
