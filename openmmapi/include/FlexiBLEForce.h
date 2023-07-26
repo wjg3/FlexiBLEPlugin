@@ -15,6 +15,7 @@
 #include "openmm/Context.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <vector>
 
@@ -52,6 +53,40 @@ namespace FlexiBLE
             }
             return NumParticles;
         }
+
+        std::vector<int> getQMIndices(std::vector<int> InputIndices)
+        {
+            std::vector<int> QMIndices;
+            for (int i = 0; i < InputIndices.size(); i++)
+            {
+                QMIndices.emplace_back(InputIndices[i]);
+            }
+            return QMIndices;
+        }
+
+        std::vector<std::pair<int, int>> getMoleculeGroups(int NumMolcules, std::vector<int> InputGroup)
+        {
+            std::vector<std::pair<int, int>> MGs;
+            for (int i = 0; i < InputGroup.size(); i++)
+            {
+                std::pair<int, int> temp;
+                temp.first = InputGroup[i];
+                if (i + 1 == (int)InputGroup.size())
+                    temp.second = NumMolcules - 1;
+                else
+                    temp.second = (int)(InputGroup[i + 1] - 1);
+                MGs.push_back(temp);
+            }
+            return MGs;
+        }
+
+        int
+        GetNumGroups() const;
+        int GetQMGroupSize(int GroupIndex) const;
+        int GetMMGroupSize(int GroupIndex) const;
+
+        const std::vector<int> &GetQMMoleculeInfo(int GroupIndex, int MLIndex) const;
+        const std::vector<int> &GetMMMoleculeInfo(int GroupIndex, int MLIndex) const;
         /**
          * This function divides particles into QM particles and MM particles, then load
          * the information into those two private vectors.
@@ -60,7 +95,7 @@ namespace FlexiBLE
          * kinds of molecules A, B and C, and they have 100, 200 and 300 individuals, then the
          * vector contains elements 0, 99 and 299.
          */
-        void GroupingMolecules(OpenMM::System &system, OpenMM::State &state, OpenMM::Context &context, std::vector<int> QMIndices, std::vector<int> MoleculeInit);
+        void GroupingMolecules(OpenMM::Context &context, std::vector<int> QMIndices, std::vector<int> MoleculeInit);
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
          * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
@@ -89,8 +124,8 @@ namespace FlexiBLE
     {
     public:
         std::vector<int> AtomIndices;
-        std::vector<OpenMM::Vec3> AtomPositions;
-        std::vector<double> AtomMasses;
+        // std::vector<OpenMM::Vec3> AtomPositions;
+        // std::vector<double> AtomMasses;
         MoleculeInfo(const std::vector<int> input) : AtomIndices(input) {}
     };
 

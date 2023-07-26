@@ -11,7 +11,7 @@
  *                                                                            *
  * -------------------------------------------------------------------------- */
 
-#include "../FlexiBLEForce.h"
+#include "FlexiBLEForce.h"
 #include "openmm/internal/NonbondedForceImpl.h"
 #include "openmm/Kernel.h"
 #include <utility>

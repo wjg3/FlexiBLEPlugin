@@ -10,14 +10,11 @@
  * Copyright (c) 2023 Kai Chen, William Glover's group                        *
  * -------------------------------------------------------------------------- */
 
-#include "../../../openmmapi/include/FlexiBLEKernels.h"
+#include "FlexiBLEKernels.h"
 #include "openmm/Platform.h"
-#include "openmm/reference/ReferenceNeighborList.h"
 #include <vector>
 #include <array>
 #include <map>
-
-using namespace std;
 
 namespace FlexiBLE
 {
@@ -28,17 +25,18 @@ namespace FlexiBLE
     class ReferenceCalcFlexiBLEForceKernel : public CalcFlexiBLEForceKernel
     {
     public:
-        ReferenceCalcFlexiBLEForceKernel(string name, const OpenMM::Platform &platform) : CalcFlexiBLEForceKernel(name, platform)
-        {
-        }
-        ~ReferenceCalcFlexiBLEForceKernel();
+        ReferenceCalcFlexiBLEForceKernel(std::string name, const OpenMM::Platform &platform) : CalcFlexiBLEForceKernel(name, platform) {}
+        ~ReferenceCalcFlexiBLEForceKernel() = default;
         /**
          * Initialize the kernel.
-         *
+         * @param context    FlexiBLE needs the information of topology
          * @param system     the System this kernel will be applied to
-         * @param force      the SlicedNonbondedForce this kernel will be used for
+         * @param force      the FlexiBLEForce this kernel will be used for
          */
-        void initialize(const System &system, const FlexiBLEForce &force);
+
+        // void GroupingMolecules(Context &context, vector<int> QMIndices, vector<int> MoleculeInit);
+
+        void initialize(const OpenMM::System &system, OpenMM::Context &context, const FlexiBLEForce &force);
         /**
          * Execute the kernel to calculate the forces and/or energy.
          *
@@ -47,18 +45,26 @@ namespace FlexiBLE
          * @param includeEnergy  true if the energy should be calculated
          * @return the potential energy due to the force
          */
-        double execute(ContextImpl &context, bool includeForces, bool includeEnergy);
+        double execute(OpenMM::ContextImpl &context, bool includeForces, bool includeEnergy);
         /**
          * Copy changed parameters over to a context.
          *
          * @param context    the context to copy parameters to
          * @param force      the FlexiBLEForce to copy the parameters from
          */
-        void copyParametersToContext(ContextImpl &context, const FlexiBLEForce &force);
+        void copyParametersToContext(OpenMM::ContextImpl &context, const FlexiBLEForce &force);
 
     private:
+        class InternalIndices;
+        std::vector<std::vector<InternalIndices>> QMGroups;
+        std::vector<std::vector<InternalIndices>> MMGroups;
     };
-
+    class ReferenceCalcFlexiBLEForceKernel::InternalIndices
+    {
+    public:
+        std::vector<int> Indices;
+        std::vector<double> AtomMasses;
+    };
 } // namespace FlexiBLE
 
 #endif /*REFERENCE_FLEXIBLE_KERNELS_H_*/

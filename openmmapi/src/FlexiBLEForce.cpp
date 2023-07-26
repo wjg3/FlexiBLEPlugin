@@ -7,8 +7,8 @@
  * Copyright (c) 2023 Kai Chen, William Glover's group                        *
  * -------------------------------------------------------------------------- */
 
-#include "../include/FlexiBLEForce.h"
-#include "../include/internal/FlexiBLEForceImpl.h"
+#include "FlexiBLEForce.h"
+#include "internal/FlexiBLEForceImpl.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include "openmm/OpenMMException.h"
 #include <string.h>
@@ -22,11 +22,33 @@ using namespace FlexiBLE;
 FlexiBLEForce::FlexiBLEForce() = default;
 FlexiBLEForce::~FlexiBLEForce() = default;
 
+int FlexiBLEForce::GetNumGroups() const
+{
+    return (int)QMMolecules.size();
+}
+int FlexiBLEForce::GetQMGroupSize(int GroupIndex) const
+{
+    return (int)QMMolecules[GroupIndex].size();
+}
+int FlexiBLEForce::GetMMGroupSize(int GroupIndex) const
+{
+    return (int)MMMolecules[GroupIndex].size();
+}
+
+const vector<int> &FlexiBLEForce::GetQMMoleculeInfo(int GroupIndex, int MLIndex) const
+{
+    return QMMolecules[GroupIndex][MLIndex].AtomIndices;
+}
+const vector<int> &FlexiBLEForce::GetMMMoleculeInfo(int GroupIndex, int MLIndex) const
+{
+    return MMMolecules[GroupIndex][MLIndex].AtomIndices;
+}
+
 // Separate molecules into the QM and MM groups
-void FlexiBLEForce::GroupingMolecules(System &system, State &state, Context &context, vector<int> QMIndices, vector<int> MoleculeInit)
+void FlexiBLEForce::GroupingMolecules(Context &context, vector<int> QMIndices, vector<int> MoleculeInit)
 {
     const vector<vector<int>> MoleculeLib = context.getMolecules();
-    vector<Vec3> positions = state.getPositions();
+    // vector<Vec3> positions = state.getPositions();
     int LastIndex = 0, CurrentIndex = 0;
     for (int i = 0; i < MoleculeLib.size(); i++)
     {
@@ -51,14 +73,14 @@ void FlexiBLEForce::GroupingMolecules(System &system, State &state, Context &con
             temp.second = NumMolecules - 1;
         else
             temp.second = (int)(MoleculeInit[i + 1] - 1);
-        MoleculeGroups.push_back(temp);
+        MoleculeGroups.emplace_back(temp);
     }
 
     for (int i = 0; i < MoleculeGroups.size(); i++)
     {
         vector<MoleculeInfo> temp;
-        QMMolecules.push_back(temp);
-        MMMolecules.push_back(temp);
+        QMMolecules.emplace_back(temp);
+        MMMolecules.emplace_back(temp);
     }
     stable_sort(QMIndices.begin(), QMIndices.end());
     int GroupNow = 0;
@@ -75,24 +97,24 @@ void FlexiBLEForce::GroupingMolecules(System &system, State &state, Context &con
         {
             MoleculeInfo temp(MoleculeLib[i]);
             QMIndices.erase(QMIndices.begin(), QMIndices.begin() + MoleculeLib[i].size());
-            for (int j = 0; j < temp.AtomIndices.size(); j++)
-            {
-                if (MoleculeLib[i][j] >= QMIndices[0])
-                    throw OpenMMException("FlexiBLE: QM Indices not valid");
-                temp.AtomPositions.push_back(positions[MoleculeLib[i][j]]);
-                temp.AtomMasses.push_back(system.getParticleMass(MoleculeLib[i][j]));
-            }
-            QMMolecules[GroupNow].push_back(temp);
+            //    for (int j = 0; j < temp.AtomIndices.size(); j++)
+            //   {
+            //       if (MoleculeLib[i][j] >= QMIndices[0])
+            //           throw OpenMMException("FlexiBLE: QM Indices not valid");
+            //       temp.AtomPositions.push_back(positions[MoleculeLib[i][j]]);
+            //       temp.AtomMasses.push_back(system.getParticleMass(MoleculeLib[i][j]));
+            //   }
+            QMMolecules[GroupNow].emplace_back(temp);
         }
         else
         {
             MoleculeInfo temp(MoleculeLib[i]);
-            for (int j = 0; j < temp.AtomIndices.size(); j++)
-            {
-                temp.AtomPositions.push_back(positions[MoleculeLib[i][j]]);
-                temp.AtomMasses.push_back(system.getParticleMass(MoleculeLib[i][j]));
-            }
-            MMMolecules[GroupNow].push_back(temp);
+            // for (int j = 0; j < temp.AtomIndices.size(); j++)
+            //{
+            //     temp.AtomPositions.push_back(positions[MoleculeLib[i][j]]);
+            //     temp.AtomMasses.push_back(system.getParticleMass(MoleculeLib[i][j]));
+            // }
+            MMMolecules[GroupNow].emplace_back(temp);
         }
     }
 }

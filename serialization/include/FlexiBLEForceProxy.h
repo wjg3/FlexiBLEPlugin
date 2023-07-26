@@ -1,5 +1,5 @@
-#ifndef OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_
-#define OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_
+#ifndef OPENMM_FLEXIBLEFORCE_PROXY_H_
+#define OPENMM_FLEXIBLEFORCE_PROXY_H_
 
 /* -------------------------------------------------------------------------- *
  *                      FlexiBLE QM/MM Boundary Potential                     *
@@ -10,22 +10,26 @@
  * Copyright (c) 2023 Kai Chen, William Glover's group                        *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
-#include <string>
+#include "../../openmmapi/include/internal/windowsExportFlexiBLE.h"
+#include "openmm/serialization/SerializationProxy.h"
+
+using namespace OpenMM;
 
 namespace FlexiBLE
 {
 
     /**
-     * This KernelFactory creates kernels for the reference implementation of the FlexiBLE plugin.
+     * This is a proxy for serializing FlexiBLEForce objects.
      */
 
-    class ReferenceFlexiBLEKernelFactory : public OpenMM::KernelFactory
+    class OPENMM_EXPORT_FLEXIBLE FlexiBLEForceProxy : public SerializationProxy
     {
     public:
-        KernelImpl *createKernelImpl(std::string name, const OpenMM::Platform &platform, OpenMM::ContextImpl &context) const;
+        FlexiBLEForceProxy();
+        void serialize(const void *object, SerializationNode &node) const;
+        void *deserialize(const SerializationNode &node) const;
     };
 
-} // namespace FlexiBLE
+} // namespace OpenMM
 
-#endif /*OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_*/
+#endif /*OPENMM_FLEXIBLE_PROXY_H_*/

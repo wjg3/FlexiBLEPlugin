@@ -1,6 +1,3 @@
-#ifndef OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_
-#define OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_
-
 /* -------------------------------------------------------------------------- *
  *                      FlexiBLE QM/MM Boundary Potential                     *
  *                          ========================                          *
@@ -10,22 +7,14 @@
  * Copyright (c) 2023 Kai Chen, William Glover's group                        *
  * -------------------------------------------------------------------------- */
 
-#include "openmm/KernelFactory.h"
-#include <string>
-
-namespace FlexiBLE
-{
-
-    /**
-     * This KernelFactory creates kernels for the reference implementation of the FlexiBLE plugin.
-     */
-
-    class ReferenceFlexiBLEKernelFactory : public OpenMM::KernelFactory
-    {
-    public:
-        KernelImpl *createKernelImpl(std::string name, const OpenMM::Platform &platform, OpenMM::ContextImpl &context) const;
-    };
-
-} // namespace FlexiBLE
-
-#endif /*OPENMM_REFERENCE_FLEXIBLE_KERNELFACTORY_H_*/
+#include "FlexiBLEForce.h"
+#include "openmm/internal/AssertionUtilities.h"
+#include "openmm/Context.h"
+#include "openmm/Platform.h"
+#include "openmm/System.h"
+#include "openmm/VerletIntegrator.h"
+#include "openmm/NonbondedForce.h"
+#include <cmath>
+#include <iostream>
+#include <vector>
+#include <fstream>
