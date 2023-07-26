@@ -34,25 +34,6 @@ namespace FlexiBLE
         {
             return false;
         }
-        int getNumParticles() const
-        {
-            int NumParticles = 0;
-            for (int i = 0; i < QMMolecules.size(); i++)
-            {
-                for (int j = 0; j < QMMolecules[i].size(); j++)
-                {
-                    NumParticles += (int)QMMolecules[i][j].AtomIndices.size();
-                }
-            }
-            for (int i = 0; i < MMMolecules.size(); i++)
-            {
-                for (int j = 0; j < MMMolecules[i].size(); j++)
-                {
-                    NumParticles += (int)MMMolecules[i][j].AtomIndices.size();
-                }
-            }
-            return NumParticles;
-        }
 
         std::vector<int> getQMIndices(std::vector<int> InputIndices)
         {
@@ -126,7 +107,7 @@ namespace FlexiBLE
         std::vector<int> AtomIndices;
         // std::vector<OpenMM::Vec3> AtomPositions;
         // std::vector<double> AtomMasses;
-        MoleculeInfo(const std::vector<int> input) : AtomIndices(input) {}
+        MoleculeInfo(std::vector<int> input) : AtomIndices(input) {}
     };
 
 } // namespace FlexiBLE

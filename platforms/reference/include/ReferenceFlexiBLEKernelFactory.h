@@ -13,17 +13,17 @@
 #include "openmm/KernelFactory.h"
 #include <string>
 
-namespace FlexiBLE
+namespace OpenMM
 {
 
     /**
      * This KernelFactory creates kernels for the reference implementation of the FlexiBLE plugin.
      */
 
-    class ReferenceFlexiBLEKernelFactory : public OpenMM::KernelFactory
+    class ReferenceFlexiBLEKernelFactory : public KernelFactory
     {
     public:
-        KernelImpl *createKernelImpl(std::string name, const OpenMM::Platform &platform, OpenMM::ContextImpl &context) const;
+        KernelImpl *createKernelImpl(std::string name, const Platform &platform, ContextImpl &context) const;
     };
 
 } // namespace FlexiBLE

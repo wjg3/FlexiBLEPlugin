@@ -36,7 +36,7 @@ namespace FlexiBLE
 
         // void GroupingMolecules(Context &context, vector<int> QMIndices, vector<int> MoleculeInit);
 
-        void initialize(const OpenMM::System &system, OpenMM::Context &context, const FlexiBLEForce &force);
+        void initialize(const OpenMM::System &system, const FlexiBLEForce &force);
         /**
          * Execute the kernel to calculate the forces and/or energy.
          *

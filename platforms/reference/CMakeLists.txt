@@ -5,7 +5,7 @@
 # Collect up information about the version of the OpenMM library we're building
 # and make it available to the code so it can be built into the binaries.
 
-SET(OPENMM_FLEXIBLE_REFERENCE_LIBRARY_NAME NonbondedSlicingReference)
+SET(OPENMM_FLEXIBLE_REFERENCE_LIBRARY_NAME FlexiBLEReference)
 
 SET(SHARED_TARGET ${OPENMM_FLEXIBLE_REFERENCE_LIBRARY_NAME})
 

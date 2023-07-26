@@ -38,7 +38,7 @@ static vector<Vec3> &extractForces(ContextImpl &context)
     return *((vector<Vec3> *)data->forces);
 }
 
-void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, Context &context, const FlexiBLEForce &force)
+void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const FlexiBLEForce &force)
 {
     int NumGroups = force.GetNumGroups();
     QMGroups.resize(NumGroups);
@@ -58,8 +58,4 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, Context 
             MMGroups[i][j].Indices = force.GetMMMoleculeInfo(i, j);
         }
     }
-}
-
-double execute(ContextImpl &context, bool includeForces, bool includeEnergy)
-{
 }
