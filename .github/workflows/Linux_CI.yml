@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux (CUDA 11.7, Python 3.10, OpenMM 8)
+          - name: Linux (OpenMM 8)
             os: ubuntu-latest
             cuda-version: "11.7.0"
             gcc-version: "11.3.*"
