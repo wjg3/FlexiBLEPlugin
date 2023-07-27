@@ -40,7 +40,11 @@ static vector<Vec3> &extractForces(ContextImpl &context)
 
 void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const FlexiBLEForce &force)
 {
-    int NumGroups = force.GetNumGroups();
+    if (force.ifGrouped == 0)
+    {
+        cout << "molecules are not grouped!" << endl;
+    }
+    int NumGroups = force.GetNumGroups("QM");
     QMGroups.resize(NumGroups);
     MMGroups.resize(NumGroups);
     for (int i = 0; i < NumGroups; i++)
@@ -58,4 +62,25 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
             MMGroups[i][j].Indices = force.GetMMMoleculeInfo(i, j);
         }
     }
+}
+
+double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool includeForces, bool includeEnergy)
+{
+    for (int i = 0; i < QMGroups.size(); i++)
+    {
+        for (int j = 0; j < QMGroups[i].size(); j++)
+        {
+            for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
+            {
+                cout << QMGroups[i][j].Indices[k] << " ";
+            }
+        }
+        cout << endl;
+    }
+    return 0.0;
+}
+
+void ReferenceCalcFlexiBLEForceKernel::copyParametersToContext(ContextImpl &context, const FlexiBLEForce &force)
+{
+    string status("It's empty for now");
 }

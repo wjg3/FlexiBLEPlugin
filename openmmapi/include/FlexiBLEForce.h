@@ -14,6 +14,7 @@
 #include "openmm/NonbondedForce.h"
 #include "openmm/Context.h"
 #include "openmm/internal/AssertionUtilities.h"
+#include "openmm/System.h"
 #include <map>
 #include <memory>
 #include <algorithm>
@@ -45,7 +46,7 @@ namespace FlexiBLE
             return QMIndices;
         }
 
-        std::vector<std::pair<int, int>> getMoleculeGroups(int NumMolcules, std::vector<int> InputGroup)
+        std::vector<std::pair<int, int>> getMoleculeGroups(int NumParticles, std::vector<int> InputGroup)
         {
             std::vector<std::pair<int, int>> MGs;
             for (int i = 0; i < InputGroup.size(); i++)
@@ -53,16 +54,15 @@ namespace FlexiBLE
                 std::pair<int, int> temp;
                 temp.first = InputGroup[i];
                 if (i + 1 == (int)InputGroup.size())
-                    temp.second = NumMolcules - 1;
+                    temp.second = NumParticles - 1;
                 else
                     temp.second = (int)(InputGroup[i + 1] - 1);
                 MGs.emplace_back(temp);
             }
             return MGs;
         }
-
-        int
-        GetNumGroups() const;
+        int ifGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
+        int GetNumGroups(const char MLType[]) const;
         int GetQMGroupSize(int GroupIndex) const;
         int GetMMGroupSize(int GroupIndex) const;
 
@@ -76,7 +76,11 @@ namespace FlexiBLE
          * kinds of molecules A, B and C, and they have 100, 200 and 300 individuals, then the
          * vector contains elements 0, 99 and 299.
          */
-        void GroupingMolecules(OpenMM::Context &context, std::vector<int> QMIndices, std::vector<int> MoleculeInit);
+        void GroupingMolecules(std::vector<std::vector<int>> MoleculeLib, std::vector<int> QMIndices, std::vector<std::pair<int, int>> MoleculeGroups);
+
+        // For disordered topology file
+        //  void GroupingDisorderedMolecules();
+
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
          * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.

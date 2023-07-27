@@ -13,7 +13,9 @@
 #include "openmm/KernelFactory.h"
 #include <string>
 
-namespace OpenMM
+using namespace OpenMM;
+
+namespace FlexiBLE
 {
 
     /**

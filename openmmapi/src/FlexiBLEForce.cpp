@@ -22,9 +22,22 @@ using namespace FlexiBLE;
 FlexiBLEForce::FlexiBLEForce() = default;
 FlexiBLEForce::~FlexiBLEForce() = default;
 
-int FlexiBLEForce::GetNumGroups() const
+int FlexiBLEForce::GetNumGroups(const char MLType[]) const
 {
-    return (int)QMMolecules.size();
+    string QM("QM");
+    string MM("MM");
+    if (QM == MLType)
+    {
+        return (int)QMMolecules.size();
+    }
+    else if (MM == MLType)
+    {
+        return (int)MMMolecules.size();
+    }
+    else
+    {
+        throw OpenMMException("FlexiBLE: Group Label not right");
+    }
 }
 int FlexiBLEForce::GetQMGroupSize(int GroupIndex) const
 {
@@ -45,9 +58,8 @@ const vector<int> &FlexiBLEForce::GetMMMoleculeInfo(int GroupIndex, int MLIndex)
 }
 
 // Separate molecules into the QM and MM groups
-void FlexiBLEForce::GroupingMolecules(Context &context, vector<int> QMIndices, vector<int> MoleculeInit)
+void FlexiBLEForce::GroupingMolecules(vector<vector<int>> MoleculeLib, vector<int> QMIndices, vector<pair<int, int>> MoleculeGroups)
 {
-    const vector<vector<int>> MoleculeLib = context.getMolecules();
     // vector<Vec3> positions = state.getPositions();
     int LastIndex = 0, CurrentIndex = 0;
     for (int i = 0; i < MoleculeLib.size(); i++)
@@ -64,17 +76,6 @@ void FlexiBLEForce::GroupingMolecules(Context &context, vector<int> QMIndices, v
     // Make elements of MoleculeInitialIndices into pairs which the
     // first element is the first index of each group, and the second
     // element is the last index of each group.
-    vector<pair<int, int>> MoleculeGroups;
-    for (int i = 0; i < MoleculeInit.size(); i++)
-    {
-        pair<int, int> temp;
-        temp.first = MoleculeInit[i];
-        if (i + 1 == (int)MoleculeInit.size())
-            temp.second = NumMolecules - 1;
-        else
-            temp.second = (int)(MoleculeInit[i + 1] - 1);
-        MoleculeGroups.emplace_back(temp);
-    }
 
     for (int i = 0; i < MoleculeGroups.size(); i++)
     {
@@ -117,6 +118,7 @@ void FlexiBLEForce::GroupingMolecules(Context &context, vector<int> QMIndices, v
             MMMolecules[GroupNow].emplace_back(temp);
         }
     }
+    ifGrouped = 1;
 }
 
 ForceImpl *FlexiBLEForce::createImpl() const

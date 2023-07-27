@@ -13,7 +13,6 @@
 #include "FlexiBLEForce.h"
 #include "openmm/KernelImpl.h"
 #include "openmm/Platform.h"
-#include "openmm/System.h"
 #include <string>
 
 namespace FlexiBLE

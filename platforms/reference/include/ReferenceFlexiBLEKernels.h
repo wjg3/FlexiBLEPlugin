@@ -26,7 +26,6 @@ namespace FlexiBLE
     {
     public:
         ReferenceCalcFlexiBLEForceKernel(std::string name, const OpenMM::Platform &platform) : CalcFlexiBLEForceKernel(name, platform) {}
-        ~ReferenceCalcFlexiBLEForceKernel() = default;
         /**
          * Initialize the kernel.
          * @param context    FlexiBLE needs the information of topology
