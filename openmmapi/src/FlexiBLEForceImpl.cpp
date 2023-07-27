@@ -44,7 +44,7 @@ double FlexiBLEForceImpl::calcForcesAndEnergy(ContextImpl &context, bool include
 vector<string> FlexiBLEForceImpl::getKernelNames()
 {
     vector<string> names;
-    names.push_back(CalcFlexiBLEForceKernel::Name());
+    names.emplace_back(CalcFlexiBLEForceKernel::Name());
     return names;
 }
 

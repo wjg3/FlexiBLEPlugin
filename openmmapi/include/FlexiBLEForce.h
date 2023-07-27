@@ -56,7 +56,7 @@ namespace FlexiBLE
                     temp.second = NumMolcules - 1;
                 else
                     temp.second = (int)(InputGroup[i + 1] - 1);
-                MGs.push_back(temp);
+                MGs.emplace_back(temp);
             }
             return MGs;
         }

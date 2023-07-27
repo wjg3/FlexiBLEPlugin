@@ -19,9 +19,16 @@
 #include <vector>
 #include <fstream>
 
+using namespace std;
+using namespace OpenMM;
+using namespace FlexiBLE;
+
 void testInput()
 {
-    int a = 1;
+    const int NumMolecules = 20;
+    vector<int> QMIndices{13, 15, 17, 19, 20, 21, 26, 27, 32, 33, 34, 35};
+    vector<int> MoleculeDVIndex{0, 20, 40};
+    int TestResult[55] = {0};
 }
 
 int main()
