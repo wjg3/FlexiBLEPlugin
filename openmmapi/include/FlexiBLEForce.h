@@ -61,6 +61,13 @@ namespace FlexiBLE
             }
             return MGs;
         }
+
+        std::vector<std::vector<int>> getMoleculeLib(std::vector<std::vector<int>> InputMoleculeLib)
+        {
+            std::vector<std::vector<int>> MoleculeLib = InputMoleculeLib;
+            return MoleculeLib;
+        }
+
         int ifGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
         int GetNumGroups(const char MLType[]) const;
         int GetQMGroupSize(int GroupIndex) const;
