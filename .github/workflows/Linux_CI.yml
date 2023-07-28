@@ -29,6 +29,9 @@ jobs:
             swig-version: "4.0.1"
     steps:
 
+      - name: "Check out"
+        uses: actions/checkout@v3
+      
       - name: "Install CUDA Toolkit on Linux"
         uses: Jimver/cuda-toolkit@v0.2.11
         id: cuda-toolkit
