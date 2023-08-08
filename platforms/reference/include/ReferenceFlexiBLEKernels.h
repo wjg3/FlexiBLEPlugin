@@ -57,6 +57,7 @@ namespace FlexiBLE
         class InternalIndices;
         std::vector<std::vector<InternalIndices>> QMGroups;
         std::vector<std::vector<InternalIndices>> MMGroups;
+        std::vector<int> AssignedAtomIndex;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {

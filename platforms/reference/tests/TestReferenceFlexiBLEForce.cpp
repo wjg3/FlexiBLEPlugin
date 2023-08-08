@@ -34,37 +34,7 @@ void testGroupingFunction()
     const double k = 0.5;
     Platform &platform = Platform::getPlatformByName("Reference");
     vector<int> InputQMIndices{13, 15, 17, 19, 20, 21, 26, 27, 32, 33, 34, 35};
-    vector<int> InputMoleculeDVIndex{0, 20, 40};
-    vector<vector<int>> MoleculeLib;
-    for (int i = 0; i < 3; i++)
-    {
-        if (i == 0)
-        {
-            for (int j = 0; j < 20; j++)
-            {
-                vector<int> temp = {j};
-                MoleculeLib.emplace_back(temp);
-            }
-        }
-        else if (i == 1)
-        {
-
-            for (int j = 0; j < 10; j++)
-            {
-                vector<int> temp = {20 + j * 2, 21 + j * 2};
-                MoleculeLib.emplace_back(temp);
-            }
-        }
-        else if (i == 2)
-        {
-
-            for (int j = 0; j < 5; j++)
-            {
-                vector<int> temp = {40 + j * 3, 41 + j * 3, 42 + j * 3};
-                MoleculeLib.emplace_back(temp);
-            }
-        }
-    }
+    vector<int> InputMoleculeInfo{20, 1, 10, 2, 5, 3};
     System system;
     for (int i = 0; i < 55; i++)
     {
@@ -87,9 +57,10 @@ void testGroupingFunction()
     }
     system.addForce(bondForce);
     FlexiBLEForce *force = new FlexiBLEForce();
-    vector<pair<int, int>> MoleculeGroups = force->getMoleculeGroups(system.getNumParticles(), InputMoleculeDVIndex);
-    vector<int> QMIndices = force->getQMIndices(InputQMIndices);
-    force->GroupingMolecules(MoleculeLib, QMIndices, MoleculeGroups);
+    force->createMoleculeGroups(InputMoleculeInfo);
+    force->getQMIndices(InputQMIndices);
+    force->createMoleculeLib(InputMoleculeInfo);
+    force->GroupingMolecules(force->MoleculeLib, force->QMIndices, force->MoleculeGroups);
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);

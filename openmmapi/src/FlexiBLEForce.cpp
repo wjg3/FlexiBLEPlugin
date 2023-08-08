@@ -39,6 +39,25 @@ int FlexiBLEForce::GetNumGroups(const char MLType[]) const
         throw OpenMMException("FlexiBLE: Group Label not right");
     }
 }
+void FlexiBLEForce::createMoleculeLib(vector<int> InputMoleculeInfo)
+{
+    if (InputMoleculeInfo.size() % 2 != 0)
+        throw OpenMMException("FlexiBLE: The Molecule group input is not paired");
+    int currentIndex = 0;
+    for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
+    {
+        for (int j = 0; j < InputMoleculeInfo[i]; j++)
+        {
+            vector<int> temp;
+            for (int k = 0; k < InputMoleculeInfo[i + 1]; k++)
+            {
+                temp.emplace_back(currentIndex);
+                currentIndex++;
+            }
+            MoleculeLib.emplace_back(temp);
+        }
+    }
+}
 int FlexiBLEForce::GetQMGroupSize(int GroupIndex) const
 {
     return (int)QMMolecules[GroupIndex].size();
@@ -73,9 +92,6 @@ void FlexiBLEForce::GroupingMolecules(vector<vector<int>> MoleculeLib, vector<in
         }
     }
     const int NumMolecules = (int)MoleculeLib.size();
-    // Make elements of MoleculeInitialIndices into pairs which the
-    // first element is the first index of each group, and the second
-    // element is the last index of each group.
 
     for (int i = 0; i < MoleculeGroups.size(); i++)
     {

@@ -35,37 +35,44 @@ namespace FlexiBLE
         {
             return false;
         }
-
-        std::vector<int> getQMIndices(std::vector<int> InputIndices)
+        std::vector<int> QMIndices;
+        void getQMIndices(std::vector<int> InputIndices)
         {
-            std::vector<int> QMIndices;
-            for (int i = 0; i < InputIndices.size(); i++)
-            {
-                QMIndices.emplace_back(InputIndices[i]);
-            }
-            return QMIndices;
+            QMIndices = InputIndices;
         }
 
-        std::vector<std::pair<int, int>> getMoleculeGroups(int NumParticles, std::vector<int> InputGroup)
+        std::vector<std::pair<int, int>> MoleculeGroups;
+        void createMoleculeGroups(std::vector<int> InputMoleculeInfo)
         {
-            std::vector<std::pair<int, int>> MGs;
-            for (int i = 0; i < InputGroup.size(); i++)
+            int startIndex = 0;
+            for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
             {
                 std::pair<int, int> temp;
-                temp.first = InputGroup[i];
-                if (i + 1 == (int)InputGroup.size())
-                    temp.second = NumParticles - 1;
-                else
-                    temp.second = (int)(InputGroup[i + 1] - 1);
-                MGs.emplace_back(temp);
+                temp.first = startIndex;
+                temp.second = startIndex + InputMoleculeInfo[i] * InputMoleculeInfo[i + 1] - 1;
+                startIndex += InputMoleculeInfo[i] * InputMoleculeInfo[i + 1];
+                MoleculeGroups.emplace_back(temp);
             }
-            return MGs;
         }
 
-        std::vector<std::vector<int>> getMoleculeLib(std::vector<std::vector<int>> InputMoleculeLib)
+        std::vector<std::vector<int>> MoleculeLib;
+        void getMoleculeLib(std::vector<std::vector<int>> InputMoleculeLib)
         {
-            std::vector<std::vector<int>> MoleculeLib = InputMoleculeLib;
-            return MoleculeLib;
+            MoleculeLib = InputMoleculeLib;
+        }
+        // The input vector should contain the amount of each molecule, and how many atoms each kind
+        // of molecules has.
+        void createMoleculeLib(std::vector<int> InputMoleculeInfo);
+
+        // The atom index for each kind of molecule that user intends to apply the force to
+        void getAssignedIndex(std::vector<int> AssignedIndex)
+        {
+            TargetAtoms = AssignedIndex;
+        }
+
+        std::vector<int> passAssignedIndex() const
+        {
+            return TargetAtoms;
         }
 
         int ifGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
@@ -77,11 +84,11 @@ namespace FlexiBLE
         const std::vector<int> &GetMMMoleculeInfo(int GroupIndex, int MLIndex) const;
         /**
          * This function divides particles into QM particles and MM particles, then load
-         * the information into those two private vectors.
+         * the information into those two vectors.
          * It takes a vector that contains the indices of all QM indice, and a vector that
          * records all initial indices of each kind molecule. For instance, if there are three
-         * kinds of molecules A, B and C, and they have 100, 200 and 300 individuals, then the
-         * vector contains elements 0, 99 and 299.
+         * kinds of molecules A, B and C, and they have 100, 200 and 300 particles, then the
+         * vector contains elements <0,98>, <99,298> and <299,599>.
          */
         void GroupingMolecules(std::vector<std::vector<int>> MoleculeLib, std::vector<int> QMIndices, std::vector<std::pair<int, int>> MoleculeGroups);
 
@@ -106,6 +113,7 @@ namespace FlexiBLE
         class MoleculeInfo;
         std::vector<std::vector<MoleculeInfo>> QMMolecules;
         std::vector<std::vector<MoleculeInfo>> MMMolecules;
+        std::vector<int> TargetAtoms;
     };
 
     /**
