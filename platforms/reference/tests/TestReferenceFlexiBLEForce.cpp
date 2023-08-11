@@ -57,10 +57,10 @@ void testGroupingFunction()
     }
     system.addForce(bondForce);
     FlexiBLEForce *force = new FlexiBLEForce();
-    force->createMoleculeGroups(InputMoleculeInfo);
-    force->getQMIndices(InputQMIndices);
-    force->createMoleculeLib(InputMoleculeInfo);
-    force->GroupingMolecules(force->MoleculeLib, force->QMIndices, force->MoleculeGroups);
+    force->CreateMoleculeGroups(InputMoleculeInfo);
+    force->SetQMIndices(InputQMIndices);
+    force->CreateMoleculeLib(InputMoleculeInfo);
+    force->GroupingMolecules();
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);

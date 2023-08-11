@@ -58,6 +58,8 @@ namespace FlexiBLE
         std::vector<std::vector<InternalIndices>> QMGroups;
         std::vector<std::vector<InternalIndices>> MMGroups;
         std::vector<int> AssignedAtomIndex;
+        std::vector<double> Alpha;
+        std::vector<std::vector<double>> BoundaryCenters;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {
@@ -65,6 +67,7 @@ namespace FlexiBLE
         std::vector<int> Indices;
         std::vector<double> AtomMasses;
     };
+
 } // namespace FlexiBLE
 
 #endif /*REFERENCE_FLEXIBLE_KERNELS_H_*/

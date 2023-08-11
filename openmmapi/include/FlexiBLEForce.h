@@ -35,47 +35,90 @@ namespace FlexiBLE
         {
             return false;
         }
-        std::vector<int> QMIndices;
-        void getQMIndices(std::vector<int> InputIndices)
+        // Set center of each boundary
+        void SetCenters(std::vector<std::vector<double>> InputCenters)
         {
-            QMIndices = InputIndices;
+            if (IfAssignedCenters == 0)
+            {
+                Centers = InputCenters;
+                IfAssignedCenters = 1;
+            }
+        }
+        std::vector<std::vector<double>> GetCenters() const
+        {
+            return Centers;
         }
 
-        std::vector<std::pair<int, int>> MoleculeGroups;
-        void createMoleculeGroups(std::vector<int> InputMoleculeInfo)
+        void SetQMIndices(std::vector<int> InputIndices)
         {
-            int startIndex = 0;
-            for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
+            if (IfInitQMIndices == 0)
             {
-                std::pair<int, int> temp;
-                temp.first = startIndex;
-                temp.second = startIndex + InputMoleculeInfo[i] * InputMoleculeInfo[i + 1] - 1;
-                startIndex += InputMoleculeInfo[i] * InputMoleculeInfo[i + 1];
-                MoleculeGroups.emplace_back(temp);
+                QMIndices = InputIndices;
+                IfInitQMIndices = 1;
             }
         }
 
-        std::vector<std::vector<int>> MoleculeLib;
-        void getMoleculeLib(std::vector<std::vector<int>> InputMoleculeLib)
+        void CreateMoleculeGroups(std::vector<int> InputMoleculeInfo)
         {
-            MoleculeLib = InputMoleculeLib;
+            if (IfInitMoleculeGroups == 0)
+            {
+                int startIndex = 0;
+                for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
+                {
+                    std::pair<int, int> temp;
+                    temp.first = startIndex;
+                    temp.second = startIndex + InputMoleculeInfo[i] * InputMoleculeInfo[i + 1] - 1;
+                    startIndex += InputMoleculeInfo[i] * InputMoleculeInfo[i + 1];
+                    MoleculeGroups.emplace_back(temp);
+                }
+                IfInitMoleculeGroups = 1;
+            }
         }
+
+        // User directly provides the molecule group info.
+        void SetMoleculeLib(std::vector<std::vector<int>> InputMoleculeLib)
+        {
+            if (IfInitMoleculeLib == 0)
+            {
+                MoleculeLib = InputMoleculeLib;
+                IfInitMoleculeLib = 1;
+            }
+        }
+
         // The input vector should contain the amount of each molecule, and how many atoms each kind
         // of molecules has.
-        void createMoleculeLib(std::vector<int> InputMoleculeInfo);
+        void CreateMoleculeLib(std::vector<int> InputMoleculeInfo);
 
         // The atom index for each kind of molecule that user intends to apply the force to
-        void getAssignedIndex(std::vector<int> AssignedIndex)
+        void SetAssignedIndex(std::vector<int> AssignedIndex)
         {
-            TargetAtoms = AssignedIndex;
+            if (IfAssignedTarget == 0)
+            {
+                TargetAtoms = AssignedIndex;
+                IfAssignedTarget = 1;
+            }
         }
 
-        std::vector<int> passAssignedIndex() const
+        std::vector<int> GetAssignedIndex() const
         {
             return TargetAtoms;
         }
 
-        int ifGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
+        void SetCoefficient(std::vector<double> inputCoe)
+        {
+            if (IfAssignedCoes == 0)
+            {
+                Coefficients = inputCoe;
+                IfAssignedCoes = 1;
+            }
+        }
+
+        std::vector<double> GetCoefficient() const
+        {
+            return Coefficients;
+        }
+
+        int IfGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
         int GetNumGroups(const char MLType[]) const;
         int GetQMGroupSize(int GroupIndex) const;
         int GetMMGroupSize(int GroupIndex) const;
@@ -90,10 +133,12 @@ namespace FlexiBLE
          * kinds of molecules A, B and C, and they have 100, 200 and 300 particles, then the
          * vector contains elements <0,98>, <99,298> and <299,599>.
          */
-        void GroupingMolecules(std::vector<std::vector<int>> MoleculeLib, std::vector<int> QMIndices, std::vector<std::pair<int, int>> MoleculeGroups);
+        void GroupingMolecules();
 
         // For disordered topology file
         //  void GroupingDisorderedMolecules();
+
+        void CheckForce() const;
 
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
@@ -110,10 +155,22 @@ namespace FlexiBLE
         OpenMM::ForceImpl *createImpl() const;
 
     private:
+        int IfInitQMIndices = 0;
+        std::vector<int> QMIndices;
+        int IfInitMoleculeGroups = 0;
+        std::vector<std::pair<int, int>> MoleculeGroups;
+        int IfInitMoleculeLib = 0;
+        std::vector<std::vector<int>> MoleculeLib;
+        int IfGroupedMolecules = 0;
         class MoleculeInfo;
         std::vector<std::vector<MoleculeInfo>> QMMolecules;
         std::vector<std::vector<MoleculeInfo>> MMMolecules;
+        int IfAssignedTarget = 0;
         std::vector<int> TargetAtoms;
+        int IfAssignedCoes = 0;
+        std::vector<double> Coefficients;
+        int IfAssignedCenters = 0;
+        std::vector<std::vector<double>> Centers;
     };
 
     /**
