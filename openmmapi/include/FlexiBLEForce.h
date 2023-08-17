@@ -35,6 +35,14 @@ namespace FlexiBLE
         {
             return false;
         }
+        void SetTestOutput(int inputVar)
+        {
+            IfEnableTestOutput = inputVar;
+        }
+        int GetTestOutput() const
+        {
+            return IfEnableTestOutput;
+        }
         // Set center of each boundary
         void SetCenters(std::vector<std::vector<double>> InputCenters)
         {
@@ -171,6 +179,7 @@ namespace FlexiBLE
         std::vector<double> Coefficients;
         int IfAssignedCenters = 0;
         std::vector<std::vector<double>> Centers;
+        int IfEnableTestOutput = 0;
     };
 
     /**

@@ -21,6 +21,8 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <fstream>
 
 using namespace FlexiBLE;
 using namespace OpenMM;
@@ -70,6 +72,46 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
     AssignedAtomIndex = force.GetAssignedIndex();
     Alpha = force.GetCoefficient();
     BoundaryCenters = force.GetCenters();
+    EnableTestOutput = force.GetTestOutput();
+}
+
+void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, vector<double> COM)
+{
+    if (Switch == 1)
+    {
+        int FirstGroup = -1;
+        for (int i = 0; i < QMGroups.size(); i++)
+        {
+            if (QMGroups[i].size() != 0 && MMGroups[i].size() != 0)
+            {
+                FirstGroup = i;
+                break;
+            }
+        }
+        if (GroupIndex == FirstGroup)
+        {
+            remove("original_coordinate.txt");
+            remove("indices_distance.txt");
+        }
+        fstream fout("original_coordinate.txt", ios::app);
+        fstream foutI("indices_distance.txt", ios::app);
+        if (BoundaryCenters.size() == 0 && GroupIndex == FirstGroup)
+            fout << "COM " << COM[0] << " " << COM[1] << " " << COM[2] << endl;
+        fout << "Layer " << GroupIndex << endl;
+        foutI << "Layer " << GroupIndex << endl;
+        for (int j = 0; j < QMGroups[GroupIndex].size(); j++)
+        {
+            fout << j << " " << coor[QMGroups[GroupIndex][j].Indices[DragIndex]][0] << " " << coor[QMGroups[GroupIndex][j].Indices[DragIndex]][1] << " " << coor[QMGroups[GroupIndex][j].Indices[DragIndex]][2] << endl;
+        }
+        for (int j = 0; j < MMGroups[GroupIndex].size(); j++)
+        {
+            fout << j + QMGroups[GroupIndex].size() << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][0] << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][1] << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][2] << endl;
+        }
+        for (int j = 0; j < rAtom.size(); j++)
+        {
+            foutI << rAtom[j].first << " " << rAtom[j].second << endl;
+        }
+    }
 }
 
 double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool includeForces, bool includeEnergy)
@@ -78,6 +120,37 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
     vector<Vec3> &Positions = extractPositions(context);
     vector<Vec3> &Force = extractForces(context);
     int NumGroups = (int)QMGroups.size();
+    // Calculate the center of mass
+    vector<double> COM = {0.0, 0.0, 0.0};
+    double TotalMass = 0.0;
+    for (int i = 0; i < NumGroups; i++)
+    {
+        for (int j = 0; j < QMGroups[i].size(); j++)
+        {
+            for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
+            {
+                TotalMass += QMGroups[i][j].AtomMasses[k];
+                for (int l = 0; l < 3; l++)
+                {
+                    COM[l] += QMGroups[i][j].AtomMasses[k] * Positions[QMGroups[i][j].Indices[k]][l];
+                }
+            }
+        }
+        for (int j = 0; j < MMGroups[i].size(); j++)
+        {
+            for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
+            {
+                TotalMass += MMGroups[i][j].AtomMasses[k];
+                for (int l = 0; l < 3; l++)
+                {
+                    COM[l] += MMGroups[i][j].AtomMasses[k] * Positions[MMGroups[i][j].Indices[k]][l];
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 3; i++)
+        COM[i] /= TotalMass;
+
     for (int i = 0; i < NumGroups; i++)
     {
         if (QMGroups[i].size() != 0 && MMGroups[i].size() != 0)
@@ -86,7 +159,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             int AtomDragged = -1;
             if (AssignedAtomIndex.size() > 0)
                 AtomDragged = AssignedAtomIndex[i];
-            else
+            else if (AssignedAtomIndex.size() == 0)
             {
                 // Calculate the geometric center of current kind of molecule
                 vector<int> Points;
@@ -135,34 +208,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     }
                 }
             }
-            // Calculate the center of mass
-            vector<double> COM = {0.0, 0.0, 0.0};
-            double TotalMass = 0.0;
-            for (int j = 0; j < QMGroups[i].size(); j++)
-            {
-                for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
-                {
-                    TotalMass += QMGroups[i][j].AtomMasses[k];
-                    for (int l = 0; l < 3; l++)
-                    {
-                        COM[l] += QMGroups[i][j].AtomMasses[k] * Positions[QMGroups[i][j].Indices[k]][l];
-                    }
-                }
-            }
-            for (int j = 0; j < MMGroups[i].size(); j++)
-            {
-                for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
-                {
-                    TotalMass += MMGroups[i][j].AtomMasses[k];
-                    for (int l = 0; l < 3; l++)
-                    {
-                        COM[l] += MMGroups[i][j].AtomMasses[k] * Positions[MMGroups[i][j].Indices[k]][l];
-                    }
-                }
-            }
-            for (int j = 0; j < 3; j++)
-                COM[j] /= TotalMass;
-
             vector<pair<int, double>> rCenter_Atom;
             // Check if the assigned center deviates from the system too much
             double maxR = 0;
@@ -171,7 +216,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
                 {
                     double R = 0.0;
-                    for (int l = 0; l < 3; k++)
+                    for (int l = 0; l < 3; l++)
                     {
                         R += pow(COM[l] - Positions[QMGroups[i][j].Indices[k]][l], 2.0);
                     }
@@ -193,7 +238,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
                 {
                     double R = 0.0;
-                    for (int l = 0; l < 3; k++)
+                    for (int l = 0; l < 3; l++)
                     {
                         R += pow(COM[l] - Positions[MMGroups[i][j].Indices[k]][l], 2.0);
                     }
@@ -202,7 +247,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     {
                         pair<int, double> temp;
                         temp.second = R;
-                        temp.first = j;
+                        temp.first = j + QMGroups[i].size();
                         rCenter_Atom.emplace_back(temp);
                     }
                     if (R > maxR)
@@ -211,47 +256,50 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             }
             if (BoundaryCenters.size() > 0)
             {
-                double dCOM_BC = 0.0;
-                for (int j = 0; j < 3; j++)
-                    dCOM_BC += pow(COM[j] - BoundaryCenters[i][j], 2.0);
-                dCOM_BC = sqrt(dCOM_BC);
-                if (dCOM_BC > maxR)
-                    throw("FlexiBLE: The assigned boundary center deviates from the center of mass too much");
-                else
+                // double dCOM_BC = 0.0;
+                // for (int j = 0; j < 3; j++)
+                //    dCOM_BC += pow(COM[j] - BoundaryCenters[i][j], 2.0);
+                // dCOM_BC = sqrt(dCOM_BC);
+                //  if (dCOM_BC > maxR)
+                //      throw("FlexiBLE: The assigned boundary center deviates from the center of mass too much");
+                //  else
+                //{
+                //}
+                rCenter_Atom.clear();
+                for (int j = 0; j < QMGroups[i].size(); j++)
                 {
-                    rCenter_Atom.clear();
-                    for (int j = 0; j < QMGroups[i].size(); j++)
+                    double R = 0.0;
+                    for (int k = 0; k < 3; k++)
                     {
-                        double R = 0.0;
-                        for (int k = 0; k < 3; k++)
-                        {
-                            R += pow(Positions[QMGroups[i][k].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
-                        }
-                        R = sqrt(R);
-                        pair<int, double> temp;
-                        temp.first = j;
-                        temp.second = R;
-                        rCenter_Atom.emplace_back(temp);
+                        R += pow(Positions[QMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
                     }
-                    for (int j = 0; j < MMGroups[i].size(); j++)
+                    R = sqrt(R);
+                    pair<int, double> temp;
+                    temp.first = j;
+                    temp.second = R;
+                    rCenter_Atom.emplace_back(temp);
+                }
+                for (int j = 0; j < MMGroups[i].size(); j++)
+                {
+                    double R = 0.0;
+                    for (int k = 0; k < 3; k++)
                     {
-                        double R = 0.0;
-                        for (int k = 0; k < 3; k++)
-                        {
-                            R += pow(Positions[MMGroups[i][k].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
-                        }
-                        R = sqrt(R);
-                        pair<int, double> temp;
-                        temp.first = j;
-                        temp.second = R;
-                        rCenter_Atom.emplace_back(temp);
+                        R += pow(Positions[MMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
                     }
+                    R = sqrt(R);
+                    pair<int, double> temp;
+                    temp.first = j + QMGroups[i].size();
+                    temp.second = R;
+                    rCenter_Atom.emplace_back(temp);
                 }
             }
+
             // Rearrange molecules by distances
             stable_sort(rCenter_Atom.begin(), rCenter_Atom.end(), [](const pair<int, double> &lhs, const pair<int, double> &rhs)
                         { return lhs.second < rhs.second; });
 
+            // Check if the reordering is working
+            TestReordering(EnableTestOutput, i, AtomDragged, Positions, rCenter_Atom, COM);
             // Calculate h^{QM Bound} and h^{MM Bound}
         }
     }

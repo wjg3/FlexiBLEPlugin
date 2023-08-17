@@ -53,6 +53,9 @@ namespace FlexiBLE
          */
         void copyParametersToContext(OpenMM::ContextImpl &context, const FlexiBLEForce &force);
 
+        // This function is here to test the reordering part with function "execute".
+        void TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, std::vector<double> COM);
+
     private:
         class InternalIndices;
         std::vector<std::vector<InternalIndices>> QMGroups;
@@ -60,6 +63,7 @@ namespace FlexiBLE
         std::vector<int> AssignedAtomIndex;
         std::vector<double> Alpha;
         std::vector<std::vector<double>> BoundaryCenters;
+        int EnableTestOutput = 0;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {
