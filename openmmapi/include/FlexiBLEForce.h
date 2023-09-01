@@ -112,18 +112,18 @@ namespace FlexiBLE
             return TargetAtoms;
         }
 
-        void SetCoefficient(std::vector<double> inputCoe)
+        void SetAlphas(std::vector<double> inputAlphas)
         {
-            if (IfAssignedCoes == 0)
+            if (IfAssignedAlphas == 0)
             {
-                Coefficients = inputCoe;
-                IfAssignedCoes = 1;
+                Alphas = inputAlphas;
+                IfAssignedAlphas = 1;
             }
         }
 
-        std::vector<double> GetCoefficient() const
+        std::vector<double> GetAlphas() const
         {
-            return Coefficients;
+            return Alphas;
         }
 
         int IfGrouped = 0; // 0 stands for ungrouped system, while 1 stands for grouped system.
@@ -147,6 +147,60 @@ namespace FlexiBLE
         //  void GroupingDisorderedMolecules();
 
         void CheckForce() const;
+
+        // Set the initial threshold of important QM & MM particles
+        void SetInitialThre(std::vector<double> thre)
+        {
+            if (IfAssignedThre == 0)
+            {
+                Thre = thre;
+                IfAssignedThre = 1;
+            }
+        }
+        const std::vector<double> &GetInitialThre() const
+        {
+            return Thre;
+        }
+
+        //  void SetFlexiBLEIterThre(std::vector<double> thre)
+        // {
+        //     if (IfAssignedIterCutoff == 0)
+        //     {
+        //         IterCutoff = thre;
+        //         IfAssignedIterCutoff = 1;
+        //     }
+        // }
+        // const std::vector<double> &GetIterCutoff() const
+        // {
+        //     return IterCutoff;
+        // }
+
+        void SetFlexiBLEMaxIt(std::vector<int> inputMaxIt)
+        {
+            if (IfAssignedMaxIt == 0)
+            {
+                MaxIt = inputMaxIt;
+                IfAssignedMaxIt = 1;
+            }
+        }
+        const std::vector<int> &GetMaxIt() const
+        {
+            return MaxIt;
+        }
+
+        void SetScales(std::vector<double> inputScales)
+        {
+            if (IfAssignedScale == 0)
+            {
+                Scales = inputScales;
+                IfAssignedScale = 1;
+            }
+        }
+
+        const std::vector<double> &GetScales() const
+        {
+            return Scales;
+        }
 
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
@@ -175,11 +229,19 @@ namespace FlexiBLE
         std::vector<std::vector<MoleculeInfo>> MMMolecules;
         int IfAssignedTarget = 0;
         std::vector<int> TargetAtoms;
-        int IfAssignedCoes = 0;
-        std::vector<double> Coefficients;
+        int IfAssignedAlphas = 0;
+        std::vector<double> Alphas;
         int IfAssignedCenters = 0;
         std::vector<std::vector<double>> Centers;
         int IfEnableTestOutput = 0;
+        int IfAssignedThre = 0;
+        std::vector<double> Thre;
+        // int IfAssignedIterCutoff = 0;
+        //  std::vector<double> IterCutoff;
+        int IfAssignedMaxIt = 0;
+        std::vector<int> MaxIt;
+        int IfAssignedScale = 0;
+        std::vector<double> Scales;
     };
 
     /**

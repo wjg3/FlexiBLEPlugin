@@ -70,9 +70,13 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
         }
     }
     AssignedAtomIndex = force.GetAssignedIndex();
-    Alpha = force.GetCoefficient();
+    Coefficients = force.GetAlphas();
     BoundaryCenters = force.GetCenters();
     EnableTestOutput = force.GetTestOutput();
+    hThre = force.GetInitialThre();
+    // IterGamma = force.GetIterCutoff();
+    FlexiBLEMaxIt = force.GetMaxIt();
+    IterScales = force.GetScales();
 }
 
 void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, vector<double> COM)
@@ -114,8 +118,119 @@ void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex
     }
 }
 
+double ReferenceCalcFlexiBLEForceKernel::CalcPairExpPart(double alpha, double R, double &der)
+{
+    double result = 0.0;
+    der = 0.0;
+    if (R > 0)
+    {
+        double aR = alpha * R;
+        double aRsq = aR * aR;
+        double aRcub = aRsq * aR;
+        result = aRcub / (1.0 + aR);
+        der = 3.0 * (alpha * aRsq) / (1.0 + aR) - alpha * aRcub / (aRsq + 2.0 * aR + 1.0);
+    }
+    return result;
+}
+
+// DerList is the list of derivative of h over distance from boundary center to the atom
+// it needs to be initialized before call this function.
+// QMSize = NumImpQM for denominators
+double ReferenceCalcFlexiBLEForceKernel::CalcPenalFunc(vector<int> seq, int QMSize, vector<vector<gInfo>> g, vector<double> &DerList, vector<pair<int, double>> rC_Atom, double h)
+{
+    // Calculate the penalty function
+    double ExpPart = 0.0;
+    for (int i = 0; i < QMSize; i++)
+    {
+        for (int j = QMSize; j < seq.size(); j++)
+        {
+            ExpPart += g[rC_Atom[seq[i]].first][rC_Atom[seq[j]].first].val;
+        }
+    }
+    double result = exp(-ExpPart);
+    // Calculate the derivative over distance from boundary center to the atom
+    if (result <= h)
+    {
+        for (int i = 0; i < QMSize; i++)
+        {
+            double der = 0.0;
+            int i_ori = rC_Atom[seq[i]].first;
+            for (int j = QMSize; j < seq.size(); j++)
+            {
+                if (i != j)
+                {
+                    int j_ori = rC_Atom[seq[j]].first;
+                    der += -g[i_ori][j_ori].der;
+                }
+            }
+            DerList[i_ori] += der * result;
+        }
+        for (int j = QMSize; j < seq.size(); j++)
+        {
+            double der = 0.0;
+            int j_ori = rC_Atom[seq[j]].first;
+            for (int i = 0; i < QMSize; i++)
+            {
+                if (i != j)
+                {
+                    int i_ori = rC_Atom[seq[i]].first;
+                    der += g[i_ori][j_ori].der;
+                }
+            }
+            DerList[j_ori] += der * result;
+        }
+    }
+    // Return result
+    return result;
+}
+
+int ReferenceCalcFlexiBLEForceKernel::FindRepeat(unordered_set<string> Nodes, string InputNode)
+{
+    if (Nodes.find(InputNode) != Nodes.end())
+        return 1;
+    else
+        return 0;
+}
+
+void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, string InputNode, double h, int QMSize, int LB, vector<vector<gInfo>> g, vector<double> &DerList, vector<pair<int, double>> rC_Atom, double DenEnergy)
+{
+    vector<int> Node;
+    int QMNow = 0, MMNow = QMSize;
+    for (int i = LB; i < InputNode.size(); i++)
+    {
+        if (InputNode[i] == '1')
+        {
+            Node[QMNow] = i;
+            QMNow++;
+        }
+        else
+        {
+            Node[MMNow] = i;
+            MMNow++;
+        }
+    }
+    double E = CalcPenalFunc(Node, QMSize, g, DerList, rC_Atom, h);
+    if (E <= h)
+    {
+        if (FindRepeat(Nodes, InputNode) == 0)
+        {
+            DenEnergy += E;
+            Nodes.insert(InputNode);
+            for (int i = 0; i < InputNode.size() - 1; i++)
+            {
+                string child = InputNode;
+                if (InputNode[i] == '1' && InputNode[i + 1] == '0')
+                    ProdChild(Nodes, InputNode, h, QMSize, LB, g, DerList, rC_Atom, DenEnergy);
+            }
+        }
+    }
+}
+
 double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool includeForces, bool includeEnergy)
 {
+    /*In this function, all objects that uses the rearranged index by distance from
+     *center to the atom will contain an extension "_re".
+     */
     double Energy = 0.0;
     vector<Vec3> &Positions = extractPositions(context);
     vector<Vec3> &Force = extractForces(context);
@@ -208,7 +323,11 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     }
                 }
             }
-            vector<pair<int, double>> rCenter_Atom;
+            // Store the distance from atom to the boundary center, the extension "re" means
+            // the order will be rearranged by the distance from center to atom.
+            vector<pair<int, double>> rCenter_Atom_re;
+            // Store the vector from boundary center to atom
+            vector<vector<double>> rCenter_Atom_Vec;
             // Check if the assigned center deviates from the system too much
             double maxR = 0;
             for (int j = 0; j < QMGroups[i].size(); j++)
@@ -216,8 +335,10 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
                 {
                     double R = 0.0;
+                    vector<double> tempVec;
                     for (int l = 0; l < 3; l++)
                     {
+                        tempVec.emplace_back(Positions[QMGroups[i][j].Indices[k]][l] - COM[l]);
                         R += pow(COM[l] - Positions[QMGroups[i][j].Indices[k]][l], 2.0);
                     }
                     R = sqrt(R);
@@ -226,7 +347,8 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         pair<int, double> temp;
                         temp.second = R;
                         temp.first = j;
-                        rCenter_Atom.emplace_back(temp);
+                        rCenter_Atom_re.emplace_back(temp);
+                        rCenter_Atom_Vec.emplace_back(tempVec);
                     }
 
                     if (R > maxR)
@@ -238,8 +360,10 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
                 {
                     double R = 0.0;
+                    vector<double> tempVec;
                     for (int l = 0; l < 3; l++)
                     {
+                        tempVec.emplace_back(Positions[MMGroups[i][j].Indices[k]][l] - COM[l]);
                         R += pow(COM[l] - Positions[MMGroups[i][j].Indices[k]][l], 2.0);
                     }
                     R = sqrt(R);
@@ -248,7 +372,8 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         pair<int, double> temp;
                         temp.second = R;
                         temp.first = j + QMGroups[i].size();
-                        rCenter_Atom.emplace_back(temp);
+                        rCenter_Atom_re.emplace_back(temp);
+                        rCenter_Atom_Vec.emplace_back(tempVec);
                     }
                     if (R > maxR)
                         maxR = R;
@@ -265,42 +390,146 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 //  else
                 //{
                 //}
-                rCenter_Atom.clear();
+                rCenter_Atom_re.clear();
+                rCenter_Atom_Vec.clear();
                 for (int j = 0; j < QMGroups[i].size(); j++)
                 {
                     double R = 0.0;
+                    vector<double> tempVec;
                     for (int k = 0; k < 3; k++)
                     {
+                        tempVec.emplace_back(Positions[QMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k]);
                         R += pow(Positions[QMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
                     }
                     R = sqrt(R);
                     pair<int, double> temp;
                     temp.first = j;
                     temp.second = R;
-                    rCenter_Atom.emplace_back(temp);
+                    rCenter_Atom_re.emplace_back(temp);
+                    rCenter_Atom_Vec.emplace_back(tempVec);
                 }
                 for (int j = 0; j < MMGroups[i].size(); j++)
                 {
                     double R = 0.0;
+                    vector<double> tempVec;
                     for (int k = 0; k < 3; k++)
                     {
+                        tempVec.emplace_back(Positions[MMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k]);
                         R += pow(Positions[MMGroups[i][j].Indices[AtomDragged]][k] - BoundaryCenters[i][k], 2.0);
                     }
                     R = sqrt(R);
                     pair<int, double> temp;
                     temp.first = j + QMGroups[i].size();
                     temp.second = R;
-                    rCenter_Atom.emplace_back(temp);
+                    rCenter_Atom_re.emplace_back(temp);
+                    rCenter_Atom_Vec.emplace_back(tempVec);
                 }
             }
 
+            // Keep one in order of original index
+            vector<pair<int, double>> rCenter_Atom = rCenter_Atom_re;
+
             // Rearrange molecules by distances
-            stable_sort(rCenter_Atom.begin(), rCenter_Atom.end(), [](const pair<int, double> &lhs, const pair<int, double> &rhs)
+            stable_sort(rCenter_Atom_re.begin(), rCenter_Atom_re.end(), [](const pair<int, double> &lhs, const pair<int, double> &rhs)
                         { return lhs.second < rhs.second; });
 
             // Check if the reordering is working
-            TestReordering(EnableTestOutput, i, AtomDragged, Positions, rCenter_Atom, COM);
-            // Calculate h^{QM Bound} and h^{MM Bound}
+            TestReordering(EnableTestOutput, i, AtomDragged, Positions, rCenter_Atom_re, COM);
+
+            // Start FlexiBLE iteration
+            int IterNum = FlexiBLEMaxIt[i];
+            // double ConvergeLimit = IterGamma[i];
+            const double ScaleFactor = IterScales[i];
+            double h = hThre[i];
+            const double AlphaNow = Coefficients[i];
+            const int QMSize = QMGroups[i].size();
+            const int MMSize = MMGroups[i].size();
+            vector<double> ForceList(QMSize + MMSize, 0.0);
+            vector<double> hList_re(QMSize + MMSize, -1.0);
+            // Store the exponential part's value and derivative over distance of pair functions
+            vector<vector<gInfo>> gExpPart;
+            // It's stored in the index the same as rCenter_Atom
+            for (int j = 0; j < QMSize + MMSize; j++)
+            {
+                vector<gInfo> temp;
+                temp.resize(QMSize + MMSize);
+                gExpPart.emplace_back(temp);
+            }
+            for (int j = 0; j < QMSize + MMSize; j++)
+            {
+                for (int k = 0; k < QMSize + MMSize; k++)
+                {
+                    if (j == k)
+                    {
+                        gExpPart[j][k].val = 0.0;
+                        gExpPart[j][k].der = 0.0;
+                    }
+                    else
+                    {
+                        double Rjk = rCenter_Atom[j].second - rCenter_Atom[k].second;
+                        double der = 0.0;
+                        gExpPart[j][k].val = CalcPairExpPart(AlphaNow, Rjk, der);
+                        gExpPart[j][k].der = der;
+                    }
+                }
+            }
+
+            // Calculate all the h^QM and h^MM values
+            for (int p = 0; p < QMSize; p++)
+            {
+                double ExpPart = 0.0;
+                for (int j = p + 1; j <= QMSize; j++)
+                {
+                    ExpPart += gExpPart[rCenter_Atom_re[j].first][rCenter_Atom_re[p].first].val;
+                }
+                hList_re[p] = exp(-ExpPart);
+            }
+            for (int q = QMSize; q < QMSize + MMSize; q++)
+            {
+                double ExpPart = 0.0;
+                for (int j = QMSize - 1; j < q; j++)
+                {
+                    ExpPart += gExpPart[rCenter_Atom_re[q].first][rCenter_Atom_re[j].first].val;
+                }
+                hList_re[q] = exp(-ExpPart);
+            }
+
+            // Calculate denominator til it converges
+            double DenNow = 0.0, DenLast = 0.0;
+            for (int j = 1; j <= IterNum + 1; j++)
+            {
+                if (j > IterNum)
+                    throw OpenMMException("FlexiBLE: Reached maximum number of iteration");
+                // Pick important QM and MM molecules
+                int ImpQMlb = 0, ImpMMub = 0; // lb = lower bound & ub = upper bound
+                for (int p = QMSize - 1; p >= 0; p--)
+                {
+                    if (hList_re[p] < h)
+                    {
+                        ImpQMlb = p + 1;
+                        break;
+                    }
+                }
+                for (int q = QMSize; q < QMSize + MMSize; q++)
+                {
+                    if (hList_re[q] < h)
+                    {
+                        ImpMMub = q - 1;
+                        break;
+                    }
+                }
+                int nImpQM = QMSize - ImpQMlb;
+                int nImpMM = ImpMMub - (QMSize - 1);
+                string perfect;
+                for (int k = 0; k < nImpQM + nImpMM; k++)
+                {
+                    if (k < nImpQM)
+                        perfect.append("1");
+                    else
+                        perfect.append("0");
+                }
+                unordered_set<string> NodeList;
+            }
         }
     }
     return 0.0;

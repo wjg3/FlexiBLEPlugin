@@ -36,6 +36,11 @@ void testGroupingFunction()
     Platform &platform = Platform::getPlatformByName("Reference");
     vector<int> InputQMIndices{13, 15, 17, 19, 20, 21, 26, 27, 32, 33, 34, 35};
     vector<int> InputMoleculeInfo{20, 1, 10, 2, 5, 3};
+    vector<double> InputThre = {0.1, 0.1, 0.1};
+    vector<double> InputIterCutoff = {0.1, 0.1, 0.1};
+    vector<int> InputMaxIt = {10, 10, 10};
+    vector<double> InputScales = {0.5, 0.5, 0.5};
+    vector<double> InputAlphas = {10, 10, 10};
     System system;
     for (int i = 0; i < 55; i++)
     {
@@ -62,6 +67,10 @@ void testGroupingFunction()
     force->SetQMIndices(InputQMIndices);
     force->CreateMoleculeLib(InputMoleculeInfo);
     force->GroupingMolecules();
+    force->SetInitialThre(InputThre);
+    force->SetFlexiBLEMaxIt(InputMaxIt);
+    force->SetScales(InputScales);
+    force->SetAlphas(InputAlphas);
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);
@@ -143,6 +152,11 @@ void testSort1()
     vector<int> InputQMIndices{13, 15, 17, 19, 20, 21, 26, 27, 32, 33, 34, 35};
     vector<int> InputMoleculeInfo{20, 1, 10, 2, 5, 3};
     vector<int> AssignedIndices{0, 0, 1};
+    vector<double> InputThre = {0.1, 0.1, 0.1};
+    vector<double> InputIterCutoff = {0.1, 0.1, 0.1};
+    vector<int> InputMaxIt = {10, 10, 10};
+    vector<double> InputScales = {0.5, 0.5, 0.5};
+    vector<double> InputAlphas = {10, 10, 10};
     System system;
     for (int i = 0; i < 55; i++)
         system.addParticle(1.0);
@@ -198,6 +212,10 @@ void testSort1()
     force->CreateMoleculeLib(InputMoleculeInfo);
     force->SetAssignedIndex(AssignedIndices);
     force->GroupingMolecules();
+    force->SetInitialThre(InputThre);
+    force->SetFlexiBLEMaxIt(InputMaxIt);
+    force->SetScales(InputScales);
+    force->SetAlphas(InputAlphas);
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);
@@ -246,6 +264,11 @@ void testSort2()
     vector<int> InputQMIndices{13, 15, 17, 19, 20, 21, 26, 27, 32, 33, 34, 35};
     vector<int> InputMoleculeInfo{20, 1, 10, 2, 4, 3};
     vector<int> AssignedIndices{0, 0, 1};
+    vector<double> InputThre = {0.1, 0.1, 0.1};
+    vector<double> InputIterCutoff = {0.1, 0.1, 0.1};
+    vector<int> InputMaxIt = {10, 10, 10};
+    vector<double> InputScales = {0.5, 0.5, 0.5};
+    vector<double> InputAlphas = {10, 10, 10};
     System system;
     for (int i = 0; i < 52; i++)
         system.addParticle(1.0);
@@ -272,6 +295,10 @@ void testSort2()
     force->CreateMoleculeLib(InputMoleculeInfo);
     force->SetAssignedIndex(AssignedIndices);
     force->GroupingMolecules();
+    force->SetInitialThre(InputThre);
+    force->SetFlexiBLEMaxIt(InputMaxIt);
+    force->SetScales(InputScales);
+    force->SetAlphas(InputAlphas);
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);

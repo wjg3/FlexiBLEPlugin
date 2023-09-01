@@ -186,6 +186,32 @@ void FlexiBLEForce::CheckForce() const
             }
         }
     }
+    if (Thre.size() != QMMolecules.size())
+        throw OpenMMException("FlexiBLE: Number of threshold does not match with the number of molecule groups");
+    // if (IterCutoff.size() != QMMolecules.size())
+    //     throw OpenMMException("FlexiBLE: Number of convergence limits does not match with the number of molecule groups");
+    if (MaxIt.size() != QMMolecules.size())
+        throw OpenMMException("FlexiBLE: Number of iteration limits does not match with the number of molecule groups");
+    if (Scales.size() != QMMolecules.size())
+        throw OpenMMException("FlexiBLE: Number of iteration scale factors does not match with the number of molecule groups");
+    if (Alphas.size() != QMMolecules.size())
+        throw OpenMMException("FlexiBLE: Number of alphas does not match with the number of groups");
+    for (int i = 0; i < QMMolecules.size(); i++)
+    {
+        if (QMMolecules[i].size() != 0 && MMMolecules.size() != 0)
+        {
+            if (Thre[i] <= 0.0)
+                throw OpenMMException("FlexiBLE: threshold is less than 0");
+            // if (IterCutoff[i] <= 0.0)
+            //     throw OpenMMException("FlexiBLE: Iteration cutoff is less than 0");
+            if (MaxIt[i] < 1)
+                throw OpenMMException("FlexiBLE: max iteration is less than 1");
+            if (Scales[i] <= 0.0 || Scales[i] >= 1.0)
+                throw OpenMMException("FlexiBLE: Iteration scale factor is incorrect");
+            if (Alphas[i] <= 0.0)
+                throw OpenMMException("FlexiBLE: Alpha value does not make sense");
+        }
+    }
 }
 
 ForceImpl *FlexiBLEForce::createImpl() const
