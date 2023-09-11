@@ -346,6 +346,10 @@ void testSort2()
     }
 }
 
+void testCalculation()
+{
+}
+
 int main()
 {
     try

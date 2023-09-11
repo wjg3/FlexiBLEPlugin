@@ -15,6 +15,7 @@
 #include "openmm/Context.h"
 #include "openmm/internal/AssertionUtilities.h"
 #include "openmm/System.h"
+#include "openmm/OpenMMException.h"
 #include <map>
 #include <memory>
 #include <algorithm>
@@ -51,6 +52,10 @@ namespace FlexiBLE
                 Centers = InputCenters;
                 IfAssignedCenters = 1;
             }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
+            }
         }
         std::vector<std::vector<double>> GetCenters() const
         {
@@ -63,6 +68,10 @@ namespace FlexiBLE
             {
                 QMIndices = InputIndices;
                 IfInitQMIndices = 1;
+            }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
             }
         }
 
@@ -81,6 +90,10 @@ namespace FlexiBLE
                 }
                 IfInitMoleculeGroups = 1;
             }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
+            }
         }
 
         // User directly provides the molecule group info.
@@ -90,6 +103,10 @@ namespace FlexiBLE
             {
                 MoleculeLib = InputMoleculeLib;
                 IfInitMoleculeLib = 1;
+            }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
             }
         }
 
@@ -105,6 +122,10 @@ namespace FlexiBLE
                 TargetAtoms = AssignedIndex;
                 IfAssignedTarget = 1;
             }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
+            }
         }
 
         std::vector<int> GetAssignedIndex() const
@@ -118,6 +139,10 @@ namespace FlexiBLE
             {
                 Alphas = inputAlphas;
                 IfAssignedAlphas = 1;
+            }
+            else
+            {
+                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
             }
         }
 
@@ -202,6 +227,23 @@ namespace FlexiBLE
             return Scales;
         }
 
+        /*When Cutoff method is 0, all terms in denominator that are
+        smaller than h_thre will be truncated. For value=1, the first child
+        terms produced that smaller than h_thre will be kept.*/
+        void SetCutoffMethod(int inputCutoffMethod)
+        {
+            if (IfSetCutoffMethod == 0)
+            {
+                CutoffMethod = inputCutoffMethod;
+                IfSetCutoffMethod = 1;
+            }
+        }
+
+        int GetCutoffMethod() const
+        {
+            return CutoffMethod;
+        }
+
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
          * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
@@ -242,6 +284,8 @@ namespace FlexiBLE
         std::vector<int> MaxIt;
         int IfAssignedScale = 0;
         std::vector<double> Scales;
+        int IfSetCutoffMethod = 0;
+        int CutoffMethod = 0;
     };
 
     /**

@@ -10,7 +10,6 @@
 #include "FlexiBLEForce.h"
 #include "internal/FlexiBLEForceImpl.h"
 #include "openmm/internal/AssertionUtilities.h"
-#include "openmm/OpenMMException.h"
 #include <string.h>
 #include <algorithm>
 #include <iostream>
@@ -39,6 +38,7 @@ int FlexiBLEForce::GetNumGroups(const char MLType[]) const
         throw OpenMMException("FlexiBLE: Group Label not right");
     }
 }
+
 void FlexiBLEForce::CreateMoleculeLib(vector<int> InputMoleculeInfo)
 {
     if (IfInitMoleculeLib == 0)
@@ -62,10 +62,12 @@ void FlexiBLEForce::CreateMoleculeLib(vector<int> InputMoleculeInfo)
         IfInitMoleculeLib = 1;
     }
 }
+
 int FlexiBLEForce::GetQMGroupSize(int GroupIndex) const
 {
     return (int)QMMolecules[GroupIndex].size();
 }
+
 int FlexiBLEForce::GetMMGroupSize(int GroupIndex) const
 {
     return (int)MMMolecules[GroupIndex].size();
@@ -75,6 +77,7 @@ const vector<int> &FlexiBLEForce::GetQMMoleculeInfo(int GroupIndex, int MLIndex)
 {
     return QMMolecules[GroupIndex][MLIndex].AtomIndices;
 }
+
 const vector<int> &FlexiBLEForce::GetMMMoleculeInfo(int GroupIndex, int MLIndex) const
 {
     return MMMolecules[GroupIndex][MLIndex].AtomIndices;

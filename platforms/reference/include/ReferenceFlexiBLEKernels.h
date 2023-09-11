@@ -82,7 +82,7 @@ namespace FlexiBLE
         double CalcPenalFunc(std::vector<int> seq, int QMSize, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double h);
 
         // Find the child node based on the given parent node
-        void ProdChild(std::unordered_set<std::string> &Nodes, std::string InputNode, double h, int QMSize, int LB, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double DenEnergy);
+        void ProdChild(std::unordered_set<std::string> &Nodes, std::string InputNode, double h, int QMSize, int LB, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double &Energy);
 
         int FindRepeat(std::unordered_set<std::string> Nodes, std::string InputNode);
 
@@ -98,6 +98,7 @@ namespace FlexiBLE
         // std::vector<double> IterGamma;
         std::vector<int> FlexiBLEMaxIt;
         std::vector<double> IterScales;
+        int CutoffMethod = 0;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {

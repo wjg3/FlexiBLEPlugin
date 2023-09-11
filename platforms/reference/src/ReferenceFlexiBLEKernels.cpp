@@ -77,6 +77,7 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
     // IterGamma = force.GetIterCutoff();
     FlexiBLEMaxIt = force.GetMaxIt();
     IterScales = force.GetScales();
+    CutoffMethod = force.GetCutoffMethod();
 }
 
 void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, vector<double> COM)
@@ -149,7 +150,7 @@ double ReferenceCalcFlexiBLEForceKernel::CalcPenalFunc(vector<int> seq, int QMSi
     }
     double result = exp(-ExpPart);
     // Calculate the derivative over distance from boundary center to the atom
-    if (result <= h)
+    if (result >= h || (result < h && CutoffMethod == 1))
     {
         for (int i = 0; i < QMSize; i++)
         {
@@ -192,7 +193,7 @@ int ReferenceCalcFlexiBLEForceKernel::FindRepeat(unordered_set<string> Nodes, st
         return 0;
 }
 
-void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, string InputNode, double h, int QMSize, int LB, vector<vector<gInfo>> g, vector<double> &DerList, vector<pair<int, double>> rC_Atom, double DenEnergy)
+void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, string InputNode, double h, int QMSize, int LB, vector<vector<gInfo>> g, vector<double> &DerList, vector<pair<int, double>> rC_Atom, double &Energy)
 {
     vector<int> Node;
     int QMNow = 0, MMNow = QMSize;
@@ -210,18 +211,30 @@ void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, s
         }
     }
     double E = CalcPenalFunc(Node, QMSize, g, DerList, rC_Atom, h);
-    if (E <= h)
+    if (E >= h)
     {
         if (FindRepeat(Nodes, InputNode) == 0)
         {
-            DenEnergy += E;
+            Energy += E;
             Nodes.insert(InputNode);
             for (int i = 0; i < InputNode.size() - 1; i++)
             {
                 string child = InputNode;
                 if (InputNode[i] == '1' && InputNode[i + 1] == '0')
-                    ProdChild(Nodes, InputNode, h, QMSize, LB, g, DerList, rC_Atom, DenEnergy);
+                {
+                    child[i] = '0';
+                    child[i + 1] = '1';
+                    ProdChild(Nodes, InputNode, h, QMSize, LB, g, DerList, rC_Atom, Energy);
+                }
             }
+        }
+    }
+    else if (E < h && CutoffMethod == 1)
+    {
+        if (FindRepeat(Nodes, InputNode) == 0)
+        {
+            Energy += E;
+            Nodes.insert(InputNode);
         }
     }
 }
@@ -324,7 +337,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 }
             }
             // Store the distance from atom to the boundary center, the extension "re" means
-            // the order will be rearranged by the distance from center to atom.
+            // the order is rearranged by the distance from center to atom.
             vector<pair<int, double>> rCenter_Atom_re;
             // Store the vector from boundary center to atom
             vector<vector<double>> rCenter_Atom_Vec;
@@ -448,6 +461,9 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             vector<double> hList_re(QMSize + MMSize, -1.0);
             // Store the exponential part's value and derivative over distance of pair functions
             vector<vector<gInfo>> gExpPart;
+            vector<double> DenForce(QMSize + MMSize, 0.0);
+            vector<double> NumeForce(QMSize + MMSize, 0.0);
+            double DenEnergy = 0.0, NumeEnergy = 0.0;
             // It's stored in the index the same as rCenter_Atom
             for (int j = 0; j < QMSize + MMSize; j++)
             {
@@ -494,6 +510,14 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 hList_re[q] = exp(-ExpPart);
             }
 
+            // Calculate the numerator
+            vector<int> NumeSeq;
+            for (int j = 0; j < QMSize + MMSize; j++)
+            {
+                NumeSeq.emplace_back(j);
+            }
+            NumeEnergy = CalcPenalFunc(NumeSeq, QMSize, gExpPart, NumeForce, rCenter_Atom, h);
+
             // Calculate denominator til it converges
             double DenNow = 0.0, DenLast = 0.0;
             for (int j = 1; j <= IterNum + 1; j++)
@@ -529,6 +553,27 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         perfect.append("0");
                 }
                 unordered_set<string> NodeList;
+                vector<double> DerListDen(QMSize + MMSize, 0.0);
+                double DenEnergy = 0.0;
+                ProdChild(NodeList, perfect, h, nImpQM, ImpQMlb, gExpPart, DerListDen, rCenter_Atom_re, DenEnergy);
+                if (j == 1)
+                {
+                    DenNow = DenEnergy;
+                    DenLast = DenEnergy;
+                }
+                else
+                {
+                    DenNow = DenEnergy;
+                    if ((DenNow - DenLast) > h * DenLast)
+                    {
+                        h *= ScaleFactor;
+                        DenLast = DenNow;
+                    }
+                    else if ((DenNow - DenLast) <= h * DenLast)
+                    {
+                        break;
+                    }
+                }
             }
         }
     }
