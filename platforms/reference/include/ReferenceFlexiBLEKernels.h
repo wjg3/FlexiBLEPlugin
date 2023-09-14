@@ -75,6 +75,10 @@ namespace FlexiBLE
         // This function is here to test the reordering part with function "execute".
         void TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, std::vector<double> COM);
 
+        void TestPairFunc(int EnableTestOutput, std::vector<std::vector<gInfo>> gExpPart);
+
+        void TestVal(double Nume, double Deno);
+
         // Calculates the exponential part, and the derivative over Rij(R)
         double CalcPairExpPart(double alpha, double R, double &der);
 

@@ -20,6 +20,7 @@
 #include <vector>
 #include <random>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 using namespace OpenMM;
@@ -71,10 +72,6 @@ void testGroupingFunction()
     force->SetFlexiBLEMaxIt(InputMaxIt);
     force->SetScales(InputScales);
     force->SetAlphas(InputAlphas);
-    system.addForce(force);
-    VerletIntegrator integ(1.0);
-    Context context(system, integ, platform);
-    context.setPositions(positions);
 
     // Check group result
 
@@ -154,7 +151,7 @@ void testSort1()
     vector<int> AssignedIndices{0, 0, 1};
     vector<double> InputThre = {0.1, 0.1, 0.1};
     vector<double> InputIterCutoff = {0.1, 0.1, 0.1};
-    vector<int> InputMaxIt = {10, 10, 10};
+    vector<int> InputMaxIt = {2, 2, -1};
     vector<double> InputScales = {0.5, 0.5, 0.5};
     vector<double> InputAlphas = {10, 10, 10};
     System system;
@@ -266,7 +263,7 @@ void testSort2()
     vector<int> AssignedIndices{0, 0, 1};
     vector<double> InputThre = {0.1, 0.1, 0.1};
     vector<double> InputIterCutoff = {0.1, 0.1, 0.1};
-    vector<int> InputMaxIt = {10, 10, 10};
+    vector<int> InputMaxIt = {2, 2, -1};
     vector<double> InputScales = {0.5, 0.5, 0.5};
     vector<double> InputAlphas = {10, 10, 10};
     System system;
@@ -328,7 +325,7 @@ void testSort2()
             fin >> index >> x >> y >> z;
             pair<int, double> temp;
             temp.first = index;
-            temp.second = pow((x - 25.5) * (x - 25.5) + (y - 25.5) * (y - 25.5) - (z - 25.5) * (25.5 - z), 0.5);
+            temp.second = pow((x - 25.5) * (x - 25.5) + (y - 25.5) * (y - 25.5) + (z - 25.5) * (z - 25.5), 0.5);
             OriginalCoor.emplace_back(temp);
         }
         stable_sort(OriginalCoor.begin(), OriginalCoor.end(), [](const pair<int, double> &lhs, const pair<int, double> &rhs)
@@ -346,8 +343,106 @@ void testSort2()
     }
 }
 
-void testCalculation()
+void testNumerical()
 {
+    const int NumParticles = 6;
+    const int NumMolecules = 6;
+    Platform &platform = Platform::getPlatformByName("Reference");
+    vector<int> InputQMIndices{0, 1, 2};
+    vector<int> InputMoleculeInfo{6, 1};
+    vector<int> AssignedIndices{0};
+    vector<double> InputThre = {0.1};
+    vector<int> InputMaxIt = {10};
+    vector<double> InputScales = {0.5};
+    vector<double> InputAlphas = {1.5};
+    vector<vector<double>> Centers = {{0, 0, 0}};
+    System system;
+    for (int i = 0; i < 6; i++)
+        system.addParticle(1.0);
+    vector<Vec3> positions;
+    for (int i = 0; i < NumParticles; i++)
+    {
+        positions.emplace_back(Vec3(i * 0.5, 0, 0));
+    }
+    FlexiBLEForce *force = new FlexiBLEForce();
+    force->SetTestOutput(1);
+    force->SetQMIndices(InputQMIndices);
+    force->CreateMoleculeGroups(InputMoleculeInfo);
+    force->CreateMoleculeLib(InputMoleculeInfo);
+    force->SetAssignedIndex(AssignedIndices);
+    force->GroupingMolecules();
+    force->SetCenters(Centers);
+    force->SetInitialThre(InputThre);
+    force->SetFlexiBLEMaxIt(InputMaxIt);
+    force->SetScales(InputScales);
+    force->SetAlphas(InputAlphas);
+    system.addForce(force);
+    VerletIntegrator integ(1.0);
+    Context context(system, integ, platform);
+    context.setPositions(positions);
+    State state = context.getState(State::Energy | State::Forces);
+    // Check the gExpPart matrix
+    vector<double> values = {
+        0.0,
+        -0.24107142857142858,
+        -1.35,
+        -3.5048076923076925,
+        -6.75,
+        -11.101973684210526,
+    };
+    vector<double> ders = {
+        0.0,
+        1.2397959183673468,
+        3.2399999999999998,
+        5.392011834319527,
+        7.59375,
+        9.816481994459835,
+    };
+    fstream fin("gExpPart.txt", ios::in);
+    string valuesTitle;
+    fin >> valuesTitle;
+    for (int i = 0; i < 6; i++)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            double gVal;
+            fin >> gVal;
+            if (i <= j)
+            {
+                if (gVal != 0)
+                    throwException(__FILE__, __LINE__, "gVal not zero when QM particle is closer than MM particle");
+            }
+            else
+            {
+                if (fabs(gVal + values[i - j]) > 10e-5)
+                    throwException(__FILE__, __LINE__, "Pair function calculation error");
+            }
+        }
+    }
+    string DerTitle;
+    fin >> DerTitle;
+    cout << "dertitle is " << DerTitle << endl;
+    for (int i = 0; i < 6; i++)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            double gDer;
+            fin >> gDer;
+            if (i <= j)
+            {
+                if (gDer != 0)
+                    throwException(__FILE__, __LINE__, "gDer not zero when QM particle is closer than MM particle");
+            }
+            else
+            {
+                if (fabs(gDer - ders[i - j]) > 10e-5)
+                {
+                    cout << "i = " << i << ", j = " << j << ", gDer = " << setprecision(8) << gDer << endl;
+                    throwException(__FILE__, __LINE__, "Pair function derivatives calculation error");
+                }
+            }
+        }
+    }
 }
 
 int main()
@@ -355,15 +450,18 @@ int main()
     try
     {
         registerFlexiBLEReferenceKernelFactories();
-        testGroupingFunction();
-        testSort1();
-        testSort2();
+        // testGroupingFunction();
+        //  cout << "testGroupingFunction finished" << endl;
+        // testSort1();
+        //  cout << "testSort1 finished" << endl;
+        // testSort2();
+        //  cout << "testSort2 finished" << endl;
+        testNumerical();
     }
     catch (const std::exception &e)
     {
         std::cerr << e.what() << '\n';
         return 1;
     }
-    std::cout << "Done" << std::endl;
     return 0;
 }

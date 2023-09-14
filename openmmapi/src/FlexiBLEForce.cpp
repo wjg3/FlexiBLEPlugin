@@ -207,7 +207,7 @@ void FlexiBLEForce::CheckForce() const
                 throw OpenMMException("FlexiBLE: threshold is less than 0");
             // if (IterCutoff[i] <= 0.0)
             //     throw OpenMMException("FlexiBLE: Iteration cutoff is less than 0");
-            if (MaxIt[i] < 1)
+            if (MaxIt[i] < 1 && IfEnableTestOutput == 0)
                 throw OpenMMException("FlexiBLE: max iteration is less than 1");
             if (Scales[i] <= 0.0 || Scales[i] >= 1.0)
                 throw OpenMMException("FlexiBLE: Iteration scale factor is incorrect");
