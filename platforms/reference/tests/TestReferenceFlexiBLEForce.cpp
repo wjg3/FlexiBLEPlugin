@@ -348,7 +348,7 @@ void testNumerical()
     const int NumParticles = 6;
     const int NumMolecules = 6;
     Platform &platform = Platform::getPlatformByName("Reference");
-    vector<int> InputQMIndices{0, 1, 2};
+    vector<int> InputQMIndices{0, 1, 3};
     vector<int> InputMoleculeInfo{6, 1};
     vector<int> AssignedIndices{0};
     vector<double> InputThre = {0.1};
@@ -421,7 +421,6 @@ void testNumerical()
     }
     string DerTitle;
     fin >> DerTitle;
-    cout << "dertitle is " << DerTitle << endl;
     for (int i = 0; i < 6; i++)
     {
         for (int j = 0; j < 6; j++)
@@ -450,11 +449,11 @@ int main()
     try
     {
         registerFlexiBLEReferenceKernelFactories();
-        // testGroupingFunction();
+        testGroupingFunction();
         //  cout << "testGroupingFunction finished" << endl;
-        // testSort1();
-        //  cout << "testSort1 finished" << endl;
-        // testSort2();
+        testSort1();
+        // cout << "testSort1 finished" << endl;
+        testSort2();
         //  cout << "testSort2 finished" << endl;
         testNumerical();
     }

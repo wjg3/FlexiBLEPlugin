@@ -266,6 +266,53 @@ void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, s
     }
 }
 
+void ReferenceCalcFlexiBLEForceKernel::TestNumeDeno(double Nume, vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, int nImpQM, int nImpMM, vector<double> h_list, vector<double> NumeForce, unordered_set<string> NodeList, vector<double> DenoForce, double DenoNow, double DenoLast)
+{
+    remove("Nume&Deno.txt");
+    fstream fout("Nume&Deno.txt", ios::out);
+    fout << "Parameters" << endl;
+    fout << "alpha = " << alpha << endl;
+    fout << "h_thre = " << h << endl;
+    fout << "Scale = " << scale << endl;
+    fout << "QMSize = " << QMSize << endl;
+    fout << "MMSize = " << MMSize << endl;
+    fout << "nImpQM = " << nImpQM << endl;
+    fout << "nImpMM = " << nImpMM << endl;
+    fout << "Results" << endl;
+    fout << "h(Numerator) = " << Nume << endl;
+    fout << "Numerator derivative" << endl;
+    for (int i = 0; i < NumeForce.size(); i++)
+    {
+        if (i == 0)
+            fout << NumeForce[i] << endl;
+        else
+            fout << " " << NumeForce[i] << endl;
+    }
+    fout << "h_list" << endl;
+    for (int i = 0; i < h_list.size(); i++)
+    {
+        if (i == 0)
+            fout << h_list[i];
+        else
+            fout << " " << h_list[i];
+    }
+    fout << "Node_list" << endl;
+    for (const auto &node : NodeList)
+    {
+        fout << node << endl;
+    }
+    fout << "Last_Denominator = " << DenoLast << endl;
+    fout << "Final_Denominator = " << DenoNow << endl;
+    fout << "Denominator derivative" << endl;
+    for (int i = 0; i < DenoForce.size(); i++)
+    {
+        if (i == 0)
+            fout << DenoForce[i] << endl;
+        else
+            fout << " " << DenoForce[i] << endl;
+    }
+}
+
 double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool includeForces, bool includeEnergy)
 {
     /*In this function, all objects that uses the rearranged index by distance from

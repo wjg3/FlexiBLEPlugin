@@ -90,6 +90,8 @@ namespace FlexiBLE
 
         int FindRepeat(std::unordered_set<std::string> Nodes, std::string InputNode);
 
+        void TestNumeDeno(int EnableTestOutput, double Nume, std::vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, int nImpQM, int nImpMM, std::vector<double> h_list, std::vector<double> NumeForce, std::unordered_set<std::string> NodeList, std::vector<double> DenoForce, double DenoNow, double DenoLast);
+
     private:
         class InternalIndices;
         std::vector<std::vector<InternalIndices>> QMGroups;
