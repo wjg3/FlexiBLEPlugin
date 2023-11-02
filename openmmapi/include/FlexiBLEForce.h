@@ -115,6 +115,8 @@ namespace FlexiBLE
         // of molecules has.
         void CreateMoleculeLib(std::vector<int> InputMoleculeInfo);
 
+        void SetMoleculeInfo(std::vector<int> InputMoleculeInfo);
+
         // The atom index for each kind of molecule that user intends to apply the force to
         void SetAssignedIndex(std::vector<int> AssignedIndex)
         {
@@ -245,6 +247,20 @@ namespace FlexiBLE
             return CutoffMethod;
         }
 
+        void SetTemperature(double InputT)
+        {
+            if (IfSetTemperature == 0)
+            {
+                Temperature = InputT;
+                IfSetTemperature = 1;
+            }
+        }
+
+        double GetTemperature() const
+        {
+            return Temperature;
+        }
+
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
          * an efficient method to update certain parameters in an existing Context without needing to reinitialize it.
@@ -287,6 +303,8 @@ namespace FlexiBLE
         std::vector<double> Scales;
         int IfSetCutoffMethod = 0;
         int CutoffMethod = 0;
+        double Temperature = 300;
+        int IfSetTemperature = 0;
     };
 
     /**

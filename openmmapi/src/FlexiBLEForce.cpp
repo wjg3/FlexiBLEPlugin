@@ -63,6 +63,12 @@ void FlexiBLEForce::CreateMoleculeLib(vector<int> InputMoleculeInfo)
     }
 }
 
+void FlexiBLEForce::SetMoleculeInfo(vector<int> InputMoleculeInfo)
+{
+    CreateMoleculeGroups(InputMoleculeInfo);
+    CreateMoleculeLib(InputMoleculeInfo);
+}
+
 int FlexiBLEForce::GetQMGroupSize(int GroupIndex) const
 {
     return (int)QMMolecules[GroupIndex].size();

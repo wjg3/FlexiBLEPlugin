@@ -5,7 +5,7 @@
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/tests)
 
 # Automatically create tests using files named "Test*.cpp"
-FILE(GLOB TEST_PROGS "*Test*.cpp")
+FILE(GLOB TEST_PROGS "Test*.cpp")
 FOREACH(TEST_PROG ${TEST_PROGS})
     GET_FILENAME_COMPONENT(TEST_ROOT ${TEST_PROG} NAME_WE)
 

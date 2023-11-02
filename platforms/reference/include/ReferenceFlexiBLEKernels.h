@@ -83,14 +83,14 @@ namespace FlexiBLE
         double CalcPairExpPart(double alpha, double R, double &der);
 
         // Calculate the penalty function based on given arrangement, and also the derivative over Ri or Rj
-        double CalcPenalFunc(std::vector<int> seq, int QMSize, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double h);
+        double CalcPenalFunc(std::vector<int> seq, int QMSize, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double h, int part);
 
         // Find the child node based on the given parent node
         void ProdChild(std::unordered_set<std::string> &Nodes, std::string InputNode, double h, int QMSize, int LB, std::vector<std::vector<FlexiBLE::gInfo>> g, std::vector<double> &DerList, std::vector<std::pair<int, double>> rC_Atom, double &Energy);
 
         int FindRepeat(std::unordered_set<std::string> Nodes, std::string InputNode);
 
-        void TestNumeDeno(int EnableTestOutput, double Nume, std::vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, int nImpQM, int nImpMM, std::vector<double> h_list, std::vector<double> NumeForce, std::unordered_set<std::string> NodeList, std::vector<double> DenoForce, double DenoNow, double DenoLast);
+        void TestNumeDeno(int EnableTestOutput, double Nume, std::vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, std::vector<double> NumeForce, std::vector<double> DenoForce, double DenoNow, double DenoLast, std::vector<OpenMM::Vec3> Forces);
 
     private:
         class InternalIndices;
@@ -105,6 +105,12 @@ namespace FlexiBLE
         std::vector<int> FlexiBLEMaxIt;
         std::vector<double> IterScales;
         int CutoffMethod = 0;
+        double T = 300;
+        double time_total = 0.0;
+        double find_replica = 0.0;
+        double produce_nodes = 0.0;
+        double time_calc = 0.0;
+        double nodeConvert = 0.0;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {
