@@ -89,7 +89,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    VerletIntegrator integrator(0.004); // step size in ps
+    LangevinMiddleIntegrator integrator(163, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -122,7 +122,7 @@ void simulateNeon()
         writePdbFrame(frameNum, state, pdbfile); // output coordinates
         writeVelocites(frameNum, state, velfile);
         // Advance state many steps at a time, for efficient use of OpenMM.
-        integrator.step(1); // (use a lot more than this normally)
+        integrator.step(100); // (use a lot more than this normally)
         if (frameNum == 90000)
         {
             data_out << setw(13) << left << timeInPs;

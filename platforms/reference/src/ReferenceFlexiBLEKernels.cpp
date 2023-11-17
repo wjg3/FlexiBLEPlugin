@@ -45,7 +45,6 @@ static vector<Vec3> &extractForces(ContextImpl &context)
 
 void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const FlexiBLEForce &force)
 {
-    high_resolution_clock::time_point t0_init = high_resolution_clock::now();
     force.CheckForce();
     int NumGroups = force.GetNumGroups("QM");
     QMGroups.resize(NumGroups);
@@ -83,9 +82,6 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
     IterScales = force.GetScales();
     CutoffMethod = force.GetCutoffMethod();
     T = force.GetTemperature();
-    high_resolution_clock::time_point t1_init = high_resolution_clock::now();
-    duration<double> time_init = duration_cast<duration<double>>(t1_init - t0_init);
-    cout << "Initial time: " << time_init.count() << endl;
 }
 
 void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, vector<double> COM)
@@ -231,7 +227,6 @@ int ReferenceCalcFlexiBLEForceKernel::FindRepeat(unordered_set<string> Nodes, st
 
 void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, string InputNode, double h, int QMSize, int LB, vector<vector<gInfo>> g, vector<double> &DerList, vector<pair<int, double>> rC_Atom, double &sumOfDeno)
 {
-    high_resolution_clock::time_point t0_prod = high_resolution_clock::now();
     vector<int> Node(InputNode.size(), 0);
     int QMNow = 0, MMNow = QMSize;
     for (int i = 0; i < InputNode.size(); i++)
@@ -247,26 +242,11 @@ void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, s
             MMNow++;
         }
     }
-    high_resolution_clock::time_point t1_prod = high_resolution_clock::now();
-    duration<double> time_prod = duration_cast<duration<double>>(t1_prod - t0_prod);
-    nodeConvert += time_prod.count();
-    high_resolution_clock::time_point t0_calc = high_resolution_clock::now();
     vector<double> temp((int)DerList.size(), 0.0);
     double nodeVal = CalcPenalFunc(Node, QMSize, g, temp, rC_Atom, h, 1);
-    high_resolution_clock::time_point t1_calc = high_resolution_clock::now();
-    duration<double> timecalc = duration_cast<duration<double>>(t1_calc - t0_calc);
-    time_calc += timecalc.count();
     if (nodeVal >= h)
     {
-        int ifFind = 1;
-        high_resolution_clock::time_point t0_find = high_resolution_clock::now();
-        ifFind = FindRepeat(Nodes, InputNode);
-        high_resolution_clock::time_point t1_find = high_resolution_clock::now();
-        duration<double> timefind = duration_cast<duration<double>>(t1_find - t0_find);
-        find_replica += timefind.count();
-
-        // if (FindRepeat(Nodes, InputNode) == 0)
-        if (ifFind == 0)
+        if (FindRepeat(Nodes, InputNode) == 0)
         {
             sumOfDeno += nodeVal;
             for (int i = 0; i < (int)temp.size(); i++)
@@ -276,15 +256,11 @@ void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, s
             Nodes.insert(InputNode);
             for (int i = 0; i < (int)InputNode.size() - 1; i++)
             {
-                high_resolution_clock::time_point t0_new = high_resolution_clock::now();
                 string child = InputNode;
                 if (InputNode[i] == '1' && InputNode[i + 1] == '0')
                 {
                     child[i] = '0';
                     child[i + 1] = '1';
-                    high_resolution_clock::time_point t1_new = high_resolution_clock::now();
-                    duration<double> newkid = duration_cast<duration<double>>(t1_new - t0_new);
-                    produce_nodes += newkid.count();
                     ProdChild(Nodes, child, h, QMSize, LB, g, DerList, rC_Atom, sumOfDeno);
                 }
             }
@@ -362,7 +338,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
     /*In this function, all objects that uses the rearranged index by distance from
      *center to the atom will contain an extension "_re".
      */
-    high_resolution_clock::time_point t0_pos = high_resolution_clock::now();
     double Energy = 0.0;
     vector<Vec3> &Positions = extractPositions(context);
     vector<Vec3> &Force = extractForces(context);
@@ -576,9 +551,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
 
             // Check if the reordering is working
             TestReordering(EnableTestOutput, i, AtomDragged, Positions, rCenter_Atom_re, COM);
-            high_resolution_clock::time_point t1_pos = high_resolution_clock::now();
-            duration<double> time_pos = duration_cast<duration<double>>(t1_pos - t0_pos);
-            cout << "Position calculation: " << time_pos.count() << endl;
             // Start the force and energy calculation
             int IterNum = FlexiBLEMaxIt[i];
             // double ConvergeLimit = IterGamma[i];
@@ -598,7 +570,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             double DenVal = 0.0, NumeVal = 0.0;
 
             // It's stored in the index the same as rCenter_Atom
-            high_resolution_clock::time_point t0_gExp = high_resolution_clock::now();
             for (int j = 0; j < QMSize + MMSize; j++)
             {
                 vector<gInfo> temp;
@@ -623,13 +594,9 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     }
                 }
             }
-            high_resolution_clock::time_point t1_gExp = high_resolution_clock::now();
-            duration<double> time_g = duration_cast<duration<double>>(t1_gExp - t0_gExp);
-            cout << "Calculating gExpPart: " << time_g.count() << endl;
             TestPairFunc(EnableTestOutput, gExpPart);
 
             // Calculate all the h^QM and h^MM values
-            high_resolution_clock::time_point t0_hlist = high_resolution_clock::now();
             for (int p = 0; p < QMSize; p++)
             {
                 double ExpPart = 0.0;
@@ -648,24 +615,16 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 }
                 hList_re[q] = exp(-ExpPart);
             }
-            high_resolution_clock::time_point t1_hlist = high_resolution_clock::now();
-            duration<double> time_hlist = duration_cast<duration<double>>(t1_hlist - t0_hlist);
-            cout << "Calculate h list: " << time_hlist.count() << endl;
 
             // Calculate the numerator
-            high_resolution_clock::time_point t0_numerator = high_resolution_clock::now();
             vector<int> NumeSeq;
             for (int j = 0; j < QMSize + MMSize; j++)
             {
                 NumeSeq.emplace_back(j);
             }
             NumeVal = CalcPenalFunc(NumeSeq, QMSize, gExpPart, dNume_dr, rCenter_Atom, h, 0);
-            cout << fixed << setprecision(14) << "Numerator = " << NumeVal << endl;
             if (fabs(NumeVal) < 1.0e-14 && EnableTestOutput == 0)
                 throw OpenMMException("Bad configuration, numerator value way too small, h(Numerator) = " + to_string(NumeVal));
-            high_resolution_clock::time_point t1_numerator = high_resolution_clock::now();
-            duration<double> time_nume = duration_cast<duration<double>>(t1_numerator - t0_numerator);
-            cout << "Calculate numerator: " << time_nume.count() << endl;
 
             // Calculate denominator til it converges
             double DenNow = 0.0, DenLast = 0.0;
@@ -675,8 +634,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 {
                     throw OpenMMException("FlexiBLE: Reached maximum number of iteration");
                 }
-                cout << "Iteration: " << j << endl;
-                cout << "h = " << h << endl;
                 // Pick important QM and MM molecules
                 int ImpQMlb = 0, ImpMMub = 0; // lb = lower bound & ub = upper bound
                 for (int p = QMSize - 1; p >= 0; p--)
@@ -697,7 +654,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 }
                 int nImpQM = QMSize - ImpQMlb;
                 int nImpMM = ImpMMub - (QMSize - 1);
-                cout << "Important QM = " << nImpQM << ", Important MM = " << nImpMM << endl;
                 string perfect;
                 for (int k = 0; k < nImpQM + nImpMM; k++)
                 {
@@ -721,9 +677,6 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         DenVal = Deno;
                         break;
                     }
-                    cout << "Change in denominator = " << fixed << setprecision(6) << 100.0 * (DenNow - 1.0) / 1.0 << " %" << endl;
-                    cout << "Number of nodes = " << NodeList.size() << endl;
-                    cout << fixed << setprecision(6) << "Denominator = " << DenNow << endl;
                 }
                 else
                 {
@@ -740,18 +693,12 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     if ((DenNow - DenLast) > gamma * DenLast)
                     {
                         h *= ScaleFactor;
-                        cout << "Change in denominator = " << fixed << setprecision(6) << 100.0 * (DenNow - DenLast) / DenLast << " %" << endl;
                         DenLast = DenNow;
-                        cout << "Number of nodes = " << NodeList.size() << endl;
-                        cout << fixed << setprecision(6) << "Denominator = " << DenNow << endl;
                     }
                     else if ((DenNow - DenLast) <= gamma * DenLast)
                     {
                         dDen_dr = DerListDen;
-                        cout << "Change in denominator = " << fixed << setprecision(6) << 100.0 * (DenNow - DenLast) / DenLast << " %" << endl;
                         DenVal = Deno;
-                        cout << "Number of nodes = " << NodeList.size() << endl;
-                        cout << fixed << setprecision(6) << "Denominator = " << DenNow << endl;
                         break;
                     }
                 }
@@ -780,32 +727,8 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             // Add energy to system
             double Coe = 1.3807e-23 * T * 6.02214179e+23 / 1000.0; // kB*T, but with the unit of kJ/mol, so it's actually R*T
             Energy += -Coe * log(NumeVal / DenVal);
-            double EnergyConvert = 1000.0 / (4.35974381e-18 * 6.02214179e+23); // kJ/mol to Hartree
-            cout << fixed << setprecision(6) << "FlexiBLE energy = " << Energy * EnergyConvert << endl;
-            double UnitConvert = EnergyConvert * 0.052917724924 / (1822.8884855409500);
-            cout << "Numerator gradient" << endl;
-            for (int j = 0; j < QMSize + MMSize; j++)
-            {
-                cout << setiosflags(ios::left) << setw(6) << j;
-                for (int k = 0; k < 3; k++)
-                {
-                    cout << setw(16) << fixed << setprecision(10) << Coe * (1 / NumeVal) * dNume_dr[j] * (rCenter_Atom_Vec[j][k] / rCenter_Atom[j].second) * UnitConvert << " ";
-                }
-                cout << endl;
-            }
-            cout << "Denominator gradient" << endl;
-            for (int j = 0; j < QMSize + MMSize; j++)
-            {
-                cout << setiosflags(ios::left) << setw(6) << j;
-                for (int k = 0; k < 3; k++)
-                {
-                    cout << setw(16) << fixed << setprecision(10) << Coe * (1 / DenVal) * dDen_dr[j] * (rCenter_Atom_Vec[j][k] / rCenter_Atom[j].second) * UnitConvert << " ";
-                }
-                cout << endl;
-            }
-            cout << "Find replica: " << find_replica << endl;
-            cout << "Produce nodes: " << produce_nodes << endl;
-            cout << "Node conversion: " << nodeConvert << endl;
+            double EnergyConvert = 1000.0 / (4.35974381e-18 * 6.02214179e+23);          // kJ/mol to Hartree
+            double UnitConvert = EnergyConvert * 0.052917724924 / (1822.8884855409500); // AUtoAMU
             // Apply force
             for (int j = 0; j < QMSize + MMSize; j++)
             {
