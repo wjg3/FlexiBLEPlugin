@@ -1,12 +1,13 @@
 # FlexiBLEPlugin
 A plugin to calculate FlexiBLE force
-##Intallation Instruction
+
+## Intallation Instruction
 A little heads-up:
 The plugin replies on Conda Environment to install. 
-The key software package will be:
-  OpenMM        8.0.0
-  CMake         3.27.6
-  gcc_linux-64 >11
+The key software package will be:\\
+  OpenMM        8.0.0\\
+  CMake         3.27.6\\
+  gcc_linux-64 >11\\
 CUDA and OpenCL are not supported for this plugin. 
 Python APIs not configured yet. 
 
