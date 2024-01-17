@@ -16,7 +16,7 @@ Python APIs not configured yet.
 4. Type "make install". 
 5. If you wanna test FlexiBLE with molecular dynamics, alter the parameters of those tests within "platform/references/tests". The sample initial coordination and initial velocity files are within the "test" directory. 
 
-This plugin is based on Zhuofan Shen and William J. Glover's work published J. Chem. Phy., the paper "https://doi.org/10.1063/5.0067855" must be cited if using this plugin in your research. 
+This plugin is based on Zhuofan Shen and William J. Glover's work published on J. Chem. Phy., the paper "https://doi.org/10.1063/5.0067855" must be cited if using this plugin in research. 
 
 
 

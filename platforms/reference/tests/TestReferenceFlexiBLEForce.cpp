@@ -349,12 +349,12 @@ int main()
     try
     {
         registerFlexiBLEReferenceKernelFactories();
-        testGroupingFunction();
-        //   cout << "testGroupingFunction finished" << endl;
-        testSort1();
-        //  cout << "testSort1 finished" << endl;
-        testSort2();
-        //   cout << "testSort2 finished" << endl;
+        // testGroupingFunction();
+        //    cout << "testGroupingFunction finished" << endl;
+        // testSort1();
+        //   cout << "testSort1 finished" << endl;
+        // testSort2();
+        //    cout << "testSort2 finished" << endl;
     }
     catch (const std::exception &e)
     {
