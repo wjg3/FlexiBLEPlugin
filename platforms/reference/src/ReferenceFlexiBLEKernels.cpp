@@ -225,7 +225,7 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
             rCA_Vec.emplace_back(tempVec);
         }
     }
-    // Use a capsule boundary defined by a line segment as the center
+    // Use a capsule boundary defined by a line segment as the center, but the line segment is fixed on x-axis.
     else if (BoundaryShape == 2)
     {
         double CapsuleLength = BoundaryParameters[iGroup][1] - BoundaryParameters[iGroup][0];
@@ -302,7 +302,7 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
             }
         }
     }
-    // Use a capsule boundary defined by a line segment as the center
+    // Use a capsule boundary defined by a line segment as the center, line segment is freely defined in space.
     else if (BoundaryShape == 3)
     {
         vector<double> L1 = {BoundaryParameters[iGroup][0], BoundaryParameters[iGroup][1], BoundaryParameters[iGroup][2]};
