@@ -623,7 +623,7 @@ void ReferenceCalcFlexiBLEForceKernel::TestNumeDeno(int EnableTestOutput, double
 {
     remove("Nume&Deno.txt");
     fstream fout("Nume&Deno.txt", ios::out);
-    fout << "This plugin is based on Zhuofan Shen and William J. Glover's work published J. Chem. Phy., the paper <https : // doi.org/10.1063/5.0067855> must be cited if using this plugin in your research. " << endl;
+    fout << "This plugin is based on Zhuofan Shen and William J. Glover's work published on J. Chem. Phy., the paper mentioned in README must be cited if using this plugin in research. " << endl;
     fout << "Parameters" << endl;
     fout << "alpha= " << alpha << endl;
     fout << "h_thre= " << h << endl;
