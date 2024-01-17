@@ -72,6 +72,13 @@ namespace FlexiBLE
          */
         void copyParametersToContext(OpenMM::ContextImpl &context, const FlexiBLEForce &force);
 
+        std::vector<double> Calc_VecMinus(std::vector<double> lhs, std::vector<double> rhs);
+        double Calc_VecDot(std::vector<double> lhs, std::vector<double> rhs);
+        double Calc_VecMod(std::vector<double> lhs);
+        // Calculate the distance between atom and the boundary center
+        void Calc_r(std::vector<std::pair<int, double>> &rCA, std::vector<std::vector<double>> &rCA_Vec, std::vector<OpenMM::Vec3> Coordinates, int iGroup, int TargetAtom, std::vector<std::vector<double>> &drCA);
+        // Calculate the derivative of r over coordinates
+        void Calc_dr(std::vector<std::pair<int, double>> rCA, std::vector<std::vector<double>> rCA_Vec, std::vector<std::vector<double>> &drCA);
         // This function is here to test the reordering part with function "execute".
         void TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, std::vector<double> COM);
 
@@ -98,7 +105,9 @@ namespace FlexiBLE
         std::vector<std::vector<InternalIndices>> MMGroups;
         std::vector<int> AssignedAtomIndex;
         std::vector<double> Coefficients;
-        std::vector<std::vector<double>> BoundaryCenters;
+        std::vector<double> COM;
+        int BoundaryShape = 0;
+        std::vector<std::vector<double>> BoundaryParameters;
         int EnableTestOutput = 0;
         std::vector<double> hThre;
         // std::vector<double> IterGamma;
@@ -106,11 +115,11 @@ namespace FlexiBLE
         std::vector<double> IterScales;
         int CutoffMethod = 0;
         double T = 300;
-        double time_total = 0.0;
-        double find_replica = 0.0;
-        double produce_nodes = 0.0;
-        double time_calc = 0.0;
-        double nodeConvert = 0.0;
+        // double time_total = 0.0;
+        // double find_replica = 0.0;
+        // double produce_nodes = 0.0;
+        // double time_calc = 0.0;
+        // double nodeConvert = 0.0;
     };
     class ReferenceCalcFlexiBLEForceKernel::InternalIndices
     {

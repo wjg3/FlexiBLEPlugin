@@ -195,7 +195,7 @@ void simulateWater()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetCenters(Centers);
+    boundary->SetBoundaryType(1, Centers);
     boundary->SetTestOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(300.0);

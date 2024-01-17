@@ -67,23 +67,25 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.55)^2; r=sqrt(x*x+y*y+z*z)");
+    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
     FlexiBLEForce *boundary = new FlexiBLEForce();
     vector<int> InputQMIndices;
     fstream readQM("qm.txt", ios::in);
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 5; i++)
     {
         int iQM;
         readQM >> iQM;
         InputQMIndices.emplace_back(iQM);
     }
-    vector<int> InputMLInfo = {200, 1};
+    vector<int> InputMLInfo = {20, 1};
     vector<int> AssignedIndex = {0};
-    vector<double> InputThre = {0.1};
+    vector<double> InputThre = {1e-5};
     vector<int> InputMaxIt = {10};
     vector<double> InputScales = {0.5};
     vector<double> InputAlphas = {50.0};
-    vector<vector<double>> Centers = {{0.0, 0.0, 0.0}};
+    vector<vector<double>> Center = {{0.0, 0.0, 0.0}};
+    vector<vector<double>> line = {{-0.1, 0.1}};
+    vector<vector<double>> Capsule = {{-0.1, 0.0, 0.0, 0.1, 0.0, 0.0}};
     boundary->SetQMIndices(InputQMIndices);
     boundary->SetMoleculeInfo(InputMLInfo);
     boundary->SetAssignedIndex(AssignedIndex);
@@ -92,18 +94,20 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetCenters(Centers);
+    // boundary->SetBoundaryType(1, Center);
+    //   boundary->SetBoundaryType(2, line);
+    boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
     system.addForce(exforce);
     // Create three atoms.
-    vector<Vec3> initPosInNm(200);
-    vector<Vec3> initVelocities(200);
+    vector<Vec3> initPosInNm(20);
+    vector<Vec3> initVelocities(20);
     fstream read_coor("coor.txt", ios::in);
     fstream read_vel("vel.txt", ios::in);
-    for (int a = 0; a < 200; a++)
+    for (int a = 0; a < 20; a++)
     {
         double x, y, z, vx, vy, vz;
         read_coor >> x >> y >> z;
@@ -119,7 +123,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    LangevinMiddleIntegrator integrator(163, 1, 0.001); // step size in ps
+    VerletIntegrator integrator(0.004); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -137,7 +141,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 0; frameNum++)
+    for (int frameNum = 1; frameNum <= 250; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
@@ -153,7 +157,7 @@ void simulateNeon()
         writePdbFrame(frameNum, state, pdbfile); // output coordinates
         writeVelocites(frameNum, state, velfile);
         // Advance state many steps at a time, for efficient use of OpenMM.
-        integrator.step(100); // (use a lot more than this normally)
+        integrator.step(1); // (use a lot more than this normally)
         if (frameNum == 90000)
         {
             data_out << setw(13) << left << timeInPs;

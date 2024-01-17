@@ -46,22 +46,22 @@ namespace FlexiBLE
             return IfEnableTestOutput;
         }
         // Set center of each boundary
-        void SetCenters(std::vector<std::vector<double>> InputCenters)
-        {
-            if (IfAssignedCenters == 0)
-            {
-                Centers = InputCenters;
-                IfAssignedCenters = 1;
-            }
-            else
-            {
-                throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
-            }
-        }
-        std::vector<std::vector<double>> GetCenters() const
-        {
-            return Centers;
-        }
+        // void SetCenters(std::vector<std::vector<double>> InputCenters)
+        //{
+        //    if (IfAssignedCenters == 0)
+        //    {
+        //        Centers = InputCenters;
+        //        IfAssignedCenters = 1;
+        //    }
+        //    else
+        //    {
+        //        throw OpenMM::OpenMMException("FlexiBLE: Tried second time initialization");
+        //    }
+        //}
+        // std::vector<std::vector<double>> GetCenters() const
+        //{
+        //   return Centers;
+        //}
 
         void SetQMIndices(std::vector<int> InputIndices)
         {
@@ -260,6 +260,32 @@ namespace FlexiBLE
         {
             return Temperature;
         }
+        /*Function for setting the type of boundaries:
+        0 for COM, which is calculated by the program itself
+        1 for user defined center, input should be a point
+        2 for capsule located on x-axis, input should be two endpoints of the center line
+        3 for capsule shape boundary, input should be two endpoints of the center line
+        4 for molecule surface, input should be the coordinates of the molecule surface
+        PS: for option 1, 2 and 3, the number of boundaries should match the number of molecule types
+        For the type of molecule that does not need boundary potential, the boundary parameter can be empty
+        */
+        void SetBoundaryType(int InputBoundaryType, std::vector<std::vector<double>> InputBoundaries)
+        {
+            if (IfAssignedBoundary == 0)
+            {
+                BoundaryType = InputBoundaryType;
+                Boundaries = InputBoundaries;
+                IfAssignedBoundary = 1;
+            }
+        }
+        int GetBoundaryType() const
+        {
+            return BoundaryType;
+        }
+        const std::vector<std::vector<double>> &GetBoundaryParameters() const
+        {
+            return Boundaries;
+        }
 
         /**
          * Update the per-bond parameters in a Context to match those stored in this Force object.  This method provides
@@ -290,8 +316,11 @@ namespace FlexiBLE
         std::vector<int> TargetAtoms;
         int IfAssignedAlphas = 0;
         std::vector<double> Alphas;
-        int IfAssignedCenters = 0;
-        std::vector<std::vector<double>> Centers;
+        // int IfAssignedCenters = 0;
+        // std::vector < std::vector < double>> Centers;
+        int IfAssignedBoundary = 0;
+        int BoundaryType = 0;
+        std::vector<std::vector<double>> Boundaries;
         int IfEnableTestOutput = 0;
         int IfAssignedThre = 0;
         std::vector<double> Thre;

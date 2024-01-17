@@ -43,10 +43,10 @@ void FlexiBLEForce::CreateMoleculeLib(vector<int> InputMoleculeInfo)
 {
     if (IfInitMoleculeLib == 0)
     {
+        int currentIndex = 0;
         if (InputMoleculeInfo.size() % 2 != 0)
             throw OpenMMException("FlexiBLE: The Molecule group input is not paired");
-        int currentIndex = 0;
-        for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
+        for (int i = 0; i < InputMoleculeInfo.size(); i += 3)
         {
             for (int j = 0; j < InputMoleculeInfo[i]; j++)
             {
@@ -160,15 +160,10 @@ void FlexiBLEForce::CheckForce() const
         throw OpenMMException("FlexiBLE - Checking Force: Molecules are not grouped yet");
     if (QMMolecules.size() != MMMolecules.size())
         throw OpenMMException("FlexiBLE - Checking Force: Molecule groups do not match");
-    if (Centers.size() > 0)
+    if (Boundaries.size() > 0)
     {
-        if (Centers.size() != QMMolecules.size())
+        if (Boundaries.size() != max(QMMolecules.size(), MMMolecules.size()))
             throw OpenMMException("FlexiBLE - Checking Force: the number of centers do not match the number of molecule groups");
-        for (int i = 0; i < Centers.size(); i++)
-        {
-            if (Centers[i].size() != 3)
-                throw OpenMMException("FlexiBLE - Checking Force: Center of boundary input wrong");
-        }
     }
     if (TargetAtoms.size() > 0)
     {

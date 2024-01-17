@@ -66,14 +66,14 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.55)^2; r=sqrt(x*x+y*y+z*z)");
+    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
     system.addForce(exforce);
     // Create three atoms.
-    vector<Vec3> initPosInNm(200);
-    vector<Vec3> initVelocities(200);
+    vector<Vec3> initPosInNm(20);
+    vector<Vec3> initVelocities(20);
     fstream read_coor("coor.txt", ios::in);
     fstream read_vel("vel.txt", ios::in);
-    for (int a = 0; a < 200; a++)
+    for (int a = 0; a < 20; a++)
     {
         double x, y, z, vx, vy, vz;
         read_coor >> x >> y >> z;
@@ -89,7 +89,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    LangevinMiddleIntegrator integrator(163, 1, 0.001); // step size in ps
+    VerletIntegrator integrator(0.004); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -106,7 +106,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonNoFlex.pdb");
     remove("NeonNoFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 0; frameNum++)
+    for (int frameNum = 1; frameNum <= 250; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
@@ -122,7 +122,7 @@ void simulateNeon()
         writePdbFrame(frameNum, state, pdbfile); // output coordinates
         writeVelocites(frameNum, state, velfile);
         // Advance state many steps at a time, for efficient use of OpenMM.
-        integrator.step(100); // (use a lot more than this normally)
+        integrator.step(1); // (use a lot more than this normally)
         if (frameNum == 90000)
         {
             data_out << setw(13) << left << timeInPs;

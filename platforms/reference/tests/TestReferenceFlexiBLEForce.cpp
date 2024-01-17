@@ -201,7 +201,7 @@ void testSort1()
     system.addForce(bondForce);
     FlexiBLEForce *force = new FlexiBLEForce();
     vector<vector<double>> Centers = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-    force->SetCenters(Centers);
+    force->SetBoundaryType(1, Centers);
     force->SetTestOutput(1);
     force->SetQMIndices(InputQMIndices);
     force->CreateMoleculeGroups(InputMoleculeInfo);
@@ -295,6 +295,8 @@ void testSort2()
     force->SetFlexiBLEMaxIt(InputMaxIt);
     force->SetScales(InputScales);
     force->SetAlphas(InputAlphas);
+    vector<vector<double>> blank;
+    force->SetBoundaryType(0, blank);
     system.addForce(force);
     VerletIntegrator integ(1.0);
     Context context(system, integ, platform);

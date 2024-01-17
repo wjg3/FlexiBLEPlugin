@@ -33,7 +33,7 @@ void writePdbFrame(int frameNum, const State &state, string fileName)
     for (int a = (int)(posInNm.size() / 2); a < (int)posInNm.size(); ++a)
     {
         // printf("ATOM  %5d  AR   AR     1    ", a + 1); // atom number
-        fout << "ATOM  " << setw(5) << a + 1 << "  AR   AR     1    ";
+        fout << "ATOM  " << setw(5) << a + 1 << "  AR   AR     2    ";
         // printf("%8.3f%8.3f%8.3f  1.00  0.00\n",        // coordinates
         fout << setw(8) << fixed << setprecision(3) << posInNm[a][0] * 10;
         fout << setw(8) << fixed << setprecision(3) << posInNm[a][1] * 10;
@@ -101,7 +101,7 @@ void simulateNeon()
     }
     vector<int> InputMLInfo = {100, 1, 100, 1};
     vector<int> AssignedIndex = {0, 0};
-    vector<double> InputThre = {0.00001, 0.00001};
+    vector<double> InputThre = {0.1, 0.1};
     vector<int> InputMaxIt = {10, 10};
     vector<double> InputScales = {0.5, 0.5};
     vector<double> InputAlphas = {50.0, 50.0};
@@ -114,7 +114,7 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetCenters(Centers);
+    boundary->SetBoundaryType(1, Centers);
     boundary->SetTestOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
@@ -146,7 +146,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    VerletIntegrator integrator(0.002); // step size in ps
+    LangevinMiddleIntegrator integrator(163, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -164,7 +164,7 @@ void simulateNeon()
     // Simulate.
     remove("NAFlex.pdb");
     remove("NAFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 0; frameNum++)
+    for (int frameNum = 1; frameNum <= 10000; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
