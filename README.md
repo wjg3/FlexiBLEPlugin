@@ -14,4 +14,9 @@ Python APIs not configured yet.
 2. Use CCMake to configure, the CMAKE_INSTALL_PREFIX and OPENMM_DIR should be the same as your CONDA_PREFIX.
 3. Generate when you make sure the paths are right.
 4. Type "make install". 
-5. If you wanna test FlexiBLE with molecular dynamics, alter the parameters of those tests within "platform/references/tests", the steps of MD simulations are all currently 0. Then type "make tests". The sample initial coordination and initial velocity files are within the "test" directory. 
+5. If you wanna test FlexiBLE with molecular dynamics, alter the parameters of those tests within "platform/references/tests". The sample initial coordination and initial velocity files are within the "test" directory. 
+
+This plugin is based on Zhuofan Shen and William J. Glover's work published J. Chem. Phy., the paper "https://doi.org/10.1063/5.0067855" must be cited if using this plugin in your research. 
+
+
+
