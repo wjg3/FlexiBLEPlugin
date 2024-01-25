@@ -3,7 +3,7 @@ A plugin to calculate FlexiBLE force
 
 ## Intallation Instruction
 A little heads-up:  
-The plugin replies on Conda Environment to install.  
+The plugin relies on Conda Environment to install.  
 The key software package will be:  
 
     OpenMM         8.0.0 (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
