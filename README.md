@@ -1,5 +1,5 @@
 # FlexiBLEPlugin
-An [OpenMM](https://github.com/openmm/openmm) plugin that implements the FlexiBLE QM/MM boundary potential [10.1063/5.0067855]
+An [OpenMM](https://github.com/openmm/openmm) plugin that implements the FlexiBLE QM/MM boundary potential [[10.1063/5.0067855](https://doi.org/10.1063/5.0067855)]
 
 ## Intallation Instruction
 A little heads-up:  
