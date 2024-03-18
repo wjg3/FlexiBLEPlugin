@@ -1,6 +1,6 @@
 #include "OpenMM.h"
 #include "FlexiBLEForce.h"
-#include "FlexiBLEKernels.h"
+// #include "FlexiBLEKernels.h"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -146,7 +146,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    LangevinMiddleIntegrator integrator(163, 1, 0.001); // step size in ps
+    LangevinIntegrator integrator(163, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -164,7 +164,7 @@ void simulateNeon()
     // Simulate.
     remove("NAFlex.pdb");
     remove("NAFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 10000; frameNum++)
+    for (int frameNum = 1; frameNum <= 10; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

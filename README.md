@@ -6,7 +6,7 @@ A little heads-up:
 The plugin relies on Conda Environment to install.  
 The key software packages include: 
 
-    OpenMM         8.0.0 (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
+    OpenMM         8.0.0 and higher (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
     CMake          3.27.6  
     gcc_linux-64 >=11  
 

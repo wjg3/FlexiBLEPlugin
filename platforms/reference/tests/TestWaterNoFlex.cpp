@@ -165,7 +165,7 @@ void simulateWater()
         CBF2->addBond(indices, param);
     }
 
-    LangevinMiddleIntegrator integrator(300.0, 1, 0.001); // step size in ps
+    LangevinIntegrator integrator(300.0, 1, 0.001); // step size in ps
     // Platform &platform = Platform::getPlatformByName("CUDA");
     //  Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -182,7 +182,7 @@ void simulateWater()
     // Simulate.
     remove("WaterNoFlex.pdb");
     remove("WaterNoFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 0; frameNum++)
+    for (int frameNum = 1; frameNum <= 10; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
