@@ -1,5 +1,5 @@
 # FlexiBLEPlugin
-An OpenMM plugin that implements the FlexiBLE QM/MM boundary potential [10.1063/5.0067855]
+An [OpenMM](https://github.com/openmm/openmm) plugin that implements the FlexiBLE QM/MM boundary potential [10.1063/5.0067855]
 
 ## Intallation Instruction
 A little heads-up:  
@@ -20,7 +20,7 @@ Python APIs not configured yet.
 5. If you want to test FlexiBLE with molecular dynamics, alter the parameters of the tests within "platform/references/tests". The sample initial coordination and initial velocity files are within the "test" directory. 
 
 ## Citation info
-This plugin is based on Zhuofan Shen and William J. Glover's work published on J. Chem. Phy., the paper "https://doi.org/10.1063/5.0067855" must be cited if using this plugin in research. 
+This plugin is based on Zhuofan Shen and William J. Glover's work published in J. Chem. Phys. The paper "https://doi.org/10.1063/5.0067855" must be cited if using this plugin in research. 
 
 
 
