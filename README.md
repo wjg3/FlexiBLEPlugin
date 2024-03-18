@@ -22,8 +22,8 @@ Python APIs not configured yet.
 ## Citation info
 The following must be cited if using this plugin in published research: 
 
-(1) Z. Shen and W. J. Glover, "Flexible boundary layer using exchange for embedding theories. I. Theory and implementation" *J. Chem. Phys.* **155**, 224112 (2021).
-(2) FlexibLEPlugin. An OpenMM plugin implementing the FlexiBLE QM/MM boundary potential. https://github.com/kc5054/FlexiBLEPlugin
+1. Z. Shen and W. J. Glover, "Flexible boundary layer using exchange for embedding theories. I. Theory and implementation" *J. Chem. Phys.* **155**, 224112 (2021)
+2. FlexibLEPlugin. An OpenMM plugin implementing the FlexiBLE QM/MM boundary potential. https://github.com/kc5054/FlexiBLEPlugin
 
 
 
