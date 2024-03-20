@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include "PosVec.h"
 using namespace std;
 using namespace OpenMM;
 
@@ -90,15 +91,10 @@ void simulateWater()
     // Create three atoms.
     vector<Vec3> initPosInNm(600);
     vector<Vec3> initVelocities(600);
-    fstream read_coor("coor.txt", ios::in);
-    fstream read_vel("vel.txt", ios::in);
     for (int a = 0; a < 600; a++)
     {
-        double x, y, z, vx, vy, vz;
-        read_coor >> x >> y >> z;
-        initPosInNm[a] = Vec3(x, y, z); // location, nm
-        read_vel >> vx >> vy >> vz;
-        initVelocities[a] = Vec3(vx, vy, vz);
+        initPosInNm[a] = Vec3(WaterPositions[a][0], WaterPositions[a][1], WaterPositions[a][2]); // location, nm
+        initVelocities[a] = Vec3(WaterVelocities[a][0], WaterVelocities[a][1], WaterVelocities[a][2]);
     }
 
     double mdyn2kjpermole = 6.02214076 * 10000;
@@ -165,7 +161,7 @@ void simulateWater()
         CBF2->addBond(indices, param);
     }
 
-    LangevinIntegrator integrator(300.0, 1, 0.001); // step size in ps
+    LangevinMiddleIntegrator integrator(300.0, 1, 0.001); // step size in ps
     // Platform &platform = Platform::getPlatformByName("CUDA");
     //  Let OpenMM Context choose best platform.
     Context context(system, integrator);

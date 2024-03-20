@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include "PosVec.h"
 using namespace std;
 using namespace FlexiBLE;
 using namespace OpenMM;
@@ -69,14 +70,7 @@ void simulateNeon()
     system.addForce(nonbond);
     CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
     FlexiBLEForce *boundary = new FlexiBLEForce();
-    vector<int> InputQMIndices;
-    fstream readQM("qm.txt", ios::in);
-    for (int i = 0; i < 5; i++)
-    {
-        int iQM;
-        readQM >> iQM;
-        InputQMIndices.emplace_back(iQM);
-    }
+    vector<int> InputQMIndices = {0, 1, 3, 4, 14, 17, 29, 43, 44, 55, 84, 89, 92, 111, 125, 128, 140, 163, 170, 195};
     vector<int> InputMLInfo = {20, 1};
     vector<int> AssignedIndex = {0};
     vector<double> InputThre = {1e-5};
@@ -94,26 +88,21 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    // boundary->SetBoundaryType(1, Center);
-    //   boundary->SetBoundaryType(2, line);
-    boundary->SetBoundaryType(3, Capsule);
+    boundary->SetBoundaryType(1, Center);
+    // boundary->SetBoundaryType(2, line);
+    // boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
     system.addForce(exforce);
     // Create three atoms.
-    vector<Vec3> initPosInNm(20);
-    vector<Vec3> initVelocities(20);
-    fstream read_coor("coor.txt", ios::in);
-    fstream read_vel("vel.txt", ios::in);
-    for (int a = 0; a < 20; a++)
+    vector<Vec3> initPosInNm(200);
+    vector<Vec3> initVelocities(200);
+    for (int a = 0; a < 200; a++)
     {
-        double x, y, z, vx, vy, vz;
-        read_coor >> x >> y >> z;
-        initPosInNm[a] = Vec3(x, y, z); // location, nm
-        read_vel >> vx >> vy >> vz;
-        initVelocities[a] = Vec3(vx, vy, vz);
+        initPosInNm[a] = Vec3(NeonPositions[a][0], NeonPositions[a][1], NeonPositions[a][2]); // location, nm
+        initVelocities[a] = Vec3(NeonVelocities[a][0], NeonVelocities[a][1], NeonVelocities[a][2]);
         if (a == 0)
             system.addParticle(0.0); // mass of Neon, grams per mole
         else

@@ -204,8 +204,7 @@ void testSort1()
     force->SetBoundaryType(1, Centers);
     force->SetTestOutput(1);
     force->SetQMIndices(InputQMIndices);
-    force->CreateMoleculeGroups(InputMoleculeInfo);
-    force->CreateMoleculeLib(InputMoleculeInfo);
+    force->SetMoleculeInfo(InputMoleculeInfo);
     force->SetAssignedIndex(AssignedIndices);
     force->GroupingMolecules();
     force->SetInitialThre(InputThre);
@@ -349,11 +348,11 @@ int main()
     try
     {
         registerFlexiBLEReferenceKernelFactories();
-        // testGroupingFunction();
+        testGroupingFunction();
         //    cout << "testGroupingFunction finished" << endl;
-        // testSort1();
+        testSort1();
         //   cout << "testSort1 finished" << endl;
-        // testSort2();
+        testSort2();
         //    cout << "testSort2 finished" << endl;
     }
     catch (const std::exception &e)

@@ -7,6 +7,8 @@ using namespace std;
 int main()
 {
     fstream fout("PosVec.h", ios::out);
+    fout << "#include <vector>" << endl;
+    fout << endl;
 
     fstream fin("NAcoor.txt", ios::in);
     vector<vector<double>> NAcoor;
@@ -17,7 +19,7 @@ int main()
         vector<double> temp = {x, y, z};
         NAcoor.emplace_back(temp);
     }
-    fout << "vector<vector<double>> NAPositions = {";
+    fout << "std::vector<std::vector<double>> NAPositions = {";
     for (int i = 0; i < NAcoor.size(); i++)
     {
         fout << "{" << setprecision(6) << NAcoor[i][0] << "," << NAcoor[i][1] << "," << NAcoor[i][2] << "}";
@@ -35,7 +37,7 @@ int main()
         vector<double> temp = {x, y, z};
         NAvel.emplace_back(temp);
     }
-    fout << "vector<vector<double>> NAVelocities = {";
+    fout << "std::vector<std::vector<double>> NAVelocities = {";
     for (int i = 0; i < NAvel.size(); i++)
     {
         fout << "{" << setprecision(6) << NAvel[i][0] << "," << NAvel[i][1] << "," << NAvel[i][2] << "}";
@@ -53,7 +55,7 @@ int main()
         vector<double> temp = {x, y, z};
         Neoncoor.emplace_back(temp);
     }
-    fout << "vector<vector<double>> NeonPositions = {";
+    fout << "std::vector<std::vector<double>> NeonPositions = {";
     for (int i = 0; i < Neoncoor.size(); i++)
     {
         fout << "{" << setprecision(6) << Neoncoor[i][0] << "," << Neoncoor[i][1] << "," << Neoncoor[i][2] << "}";
@@ -71,7 +73,7 @@ int main()
         vector<double> temp = {x, y, z};
         Neonvel.emplace_back(temp);
     }
-    fout << "vector<vector<double>> NeonVelocities = {";
+    fout << "std::vector<std::vector<double>> NeonVelocities = {";
     for (int i = 0; i < Neonvel.size(); i++)
     {
         fout << "{" << setprecision(6) << Neonvel[i][0] << "," << Neonvel[i][1] << "," << Neonvel[i][2] << "}";
@@ -89,7 +91,7 @@ int main()
         vector<double> temp = {x, y, z};
         wat_coor.emplace_back(temp);
     }
-    fout << "vector<vector<double>> WaterPositions = {";
+    fout << "std::vector<std::vector<double>> WaterPositions = {";
     for (int i = 0; i < wat_coor.size(); i++)
     {
         fout << "{" << setprecision(6) << wat_coor[i][0] << "," << wat_coor[i][1] << "," << wat_coor[i][2] << "}";
@@ -107,7 +109,7 @@ int main()
         vector<double> temp = {x, y, z};
         wat_vel.emplace_back(temp);
     }
-    fout << "vector<vector<double>> WaterVelocities = {";
+    fout << "std::vector<std::vector<double>> WaterVelocities = {";
     for (int i = 0; i < wat_vel.size(); i++)
     {
         fout << "{" << setprecision(6) << wat_vel[i][0] << "," << wat_vel[i][1] << "," << wat_vel[i][2] << "}";

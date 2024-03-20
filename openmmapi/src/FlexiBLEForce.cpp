@@ -46,7 +46,7 @@ void FlexiBLEForce::CreateMoleculeLib(vector<int> InputMoleculeInfo)
         int currentIndex = 0;
         if (InputMoleculeInfo.size() % 2 != 0)
             throw OpenMMException("FlexiBLE: The Molecule group input is not paired");
-        for (int i = 0; i < InputMoleculeInfo.size(); i += 3)
+        for (int i = 0; i < InputMoleculeInfo.size(); i += 2)
         {
             for (int j = 0; j < InputMoleculeInfo[i]; j++)
             {

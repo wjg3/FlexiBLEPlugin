@@ -1,10 +1,11 @@
 #include "OpenMM.h"
 #include "FlexiBLEForce.h"
-//#include "FlexiBLEKernels.h"
+// #include "FlexiBLEKernels.h"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include "PosVec.h"
 using namespace std;
 using namespace FlexiBLE;
 using namespace OpenMM;
@@ -91,15 +92,10 @@ void simulateWater()
     // Create three atoms.
     vector<Vec3> initPosInNm(600);
     vector<Vec3> initVelocities(600);
-    fstream read_coor("coor.txt", ios::in);
-    fstream read_vel("vel.txt", ios::in);
     for (int a = 0; a < 600; a++)
     {
-        double x, y, z, vx, vy, vz;
-        read_coor >> x >> y >> z;
-        initPosInNm[a] = Vec3(x, y, z); // location, nm
-        read_vel >> vx >> vy >> vz;
-        initVelocities[a] = Vec3(vx, vy, vz);
+        initPosInNm[a] = Vec3(WaterPositions[a][0], WaterPositions[a][1], WaterPositions[a][2]); // location, nm
+        initVelocities[a] = Vec3(WaterVelocities[a][0], WaterVelocities[a][1], WaterVelocities[a][2]);
     }
     for (int i = 0; i < 200; i++)
     {
@@ -170,16 +166,7 @@ void simulateWater()
     system.addForce(BFOH);
     system.addForce(BFHH);
 
-    vector<int> InputQMIndices;
-    fstream readQM("qm.txt", ios::in);
-    for (int i = 0; i < 20; i++)
-    {
-        int iQM;
-        readQM >> iQM;
-        InputQMIndices.emplace_back(iQM);
-        InputQMIndices.emplace_back(iQM + 1);
-        InputQMIndices.emplace_back(iQM + 2);
-    }
+    vector<int> InputQMIndices = {0, 1, 2, 6, 7, 8, 42, 43, 44, 96, 97, 98, 135, 136, 137, 147, 148, 149, 207, 208, 209, 216, 217, 218, 252, 253, 254, 300, 301, 302, 354, 355, 356, 375, 376, 377, 444, 445, 446, 447, 448, 449, 474, 475, 476, 486, 487, 488, 534, 535, 536, 576, 577, 578, 579, 580, 581, 585, 586, 587};
     vector<int> InputMLInfo = {200, 3};
     vector<int> AssignedIndex = {0};
     vector<double> InputThre = {0.1};
@@ -196,12 +183,12 @@ void simulateWater()
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
     boundary->SetBoundaryType(1, Centers);
-    boundary->SetTestOutput(1);
+    boundary->SetTestOutput(0);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(300.0);
     system.addForce(boundary);
 
-    LangevinIntegrator integrator(300.0, 1, 0.001); // step size in ps
+    LangevinMiddleIntegrator integrator(300.0, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -235,7 +222,7 @@ void simulateWater()
         writePdbFrame(frameNum, state, pdbfile); // output coordinates
         writeVelocites(frameNum, state, velfile);
         // Advance state many steps at a time, for efficient use of OpenMM.
-        integrator.step(100); // (use a lot more than this normally)
+        integrator.step(1); // (use a lot more than this normally)
         if (frameNum == 90000)
         {
             data_out << setw(13) << left << timeInPs;

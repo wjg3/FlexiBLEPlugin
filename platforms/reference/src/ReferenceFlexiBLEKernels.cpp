@@ -451,13 +451,10 @@ void ReferenceCalcFlexiBLEForceKernel::TestReordering(int Switch, int GroupIndex
         {
             fout << j + QMGroups[GroupIndex].size() << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][0] << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][1] << " " << coor[MMGroups[GroupIndex][j].Indices[DragIndex]][2] << endl;
         }
-        for (int j = 0; j < QMGroups[GroupIndex].size(); j++)
+        for (int j = 0; j < QMGroups[GroupIndex].size() + MMGroups[GroupIndex].size(); j++)
         {
-            foutI << fixed << setprecision(8) << QMGroups[GroupIndex][j].Indices[DragIndex] << " " << rAtom[j].first << " " << rAtom[j].second << endl;
-        }
-        for (int j = 0; j < MMGroups[GroupIndex].size(); j++)
-        {
-            foutI << fixed << setprecision(8) << MMGroups[GroupIndex][j].Indices[DragIndex] << " " << rAtom[j].first + QMGroups[GroupIndex].size() << " " << rAtom[j].second << endl;
+            // foutI << fixed << setprecision(8) << QMGroups[GroupIndex][j].Indices[DragIndex] << " " << rAtom[j].first << " " << rAtom[j].second << endl;
+            foutI << fixed << setprecision(8) << rAtom[j].first << " " << rAtom[j].second << endl;
         }
     }
 }

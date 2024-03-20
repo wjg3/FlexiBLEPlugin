@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include "PosVec.h"
 using namespace std;
 using namespace FlexiBLE;
 using namespace OpenMM;
@@ -91,14 +92,7 @@ void simulateNeon()
     system.addForce(nonbond);
     CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.55)^2; r=sqrt(x*x+y*y+z*z)");
     FlexiBLEForce *boundary = new FlexiBLEForce();
-    vector<int> InputQMIndices;
-    fstream readQM("qm.txt", ios::in);
-    for (int i = 0; i < 20; i++)
-    {
-        int iQM;
-        readQM >> iQM;
-        InputQMIndices.emplace_back(iQM);
-    }
+    vector<int> InputQMIndices = {0, 3, 14, 33, 52, 53, 65, 68, 83, 89, 117, 136, 143, 164, 165, 166, 182, 186, 189, 197};
     vector<int> InputMLInfo = {100, 1, 100, 1};
     vector<int> AssignedIndex = {0, 0};
     vector<double> InputThre = {0.1, 0.1};
@@ -116,22 +110,16 @@ void simulateNeon()
     boundary->SetAlphas(InputAlphas);
     boundary->SetBoundaryType(1, Centers);
     boundary->SetTestOutput(1);
-    // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
     system.addForce(exforce);
     // Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
-    fstream read_coor("coor.txt", ios::in);
-    fstream read_vel("vel.txt", ios::in);
     for (int a = 0; a < 200; a++)
     {
-        double x, y, z, vx, vy, vz;
-        read_coor >> x >> y >> z;
-        initPosInNm[a] = Vec3(x, y, z); // location, nm
-        read_vel >> vx >> vy >> vz;
-        initVelocities[a] = Vec3(vx, vy, vz);
+        initPosInNm[a] = Vec3(NAPositions[a][0], NAPositions[a][1], NAPositions[a][2]); // location, nm
+        initVelocities[a] = Vec3(NAVelocities[a][0], NAVelocities[a][1], NAVelocities[a][2]);
         if (a == 0)
             system.addParticle(0.0); // mass of Neon, grams per mole
         else if (a > 0 && a < 100)
