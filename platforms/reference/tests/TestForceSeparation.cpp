@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
+#include <cmath>
 #include "PosVec.h"
 using namespace std;
 using namespace FlexiBLE;
@@ -91,8 +92,8 @@ void simulateNeon()
     boundary->SetTestOutput(0);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
-    system1.addForce(boundary);
-    system2.addForce(exforce);
+    system2.addForce(boundary);
+    system1.addForce(exforce);
     // Create three atoms.
     vector<Vec3> initPosInNm(6);
     vector<Vec3> initVelocities(6);
@@ -122,27 +123,42 @@ void simulateNeon()
     context2.setVelocities(initVelocities);
     State state1 = context1.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
     State state2 = context2.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
-    cout << "Ex force" << endl;
     vector<Vec3> exf;
     exf = state1.getForces();
+    int errorCount = 0;
     for (int i = 0; i < state1.getForces().size(); i++)
     {
         for (int j = 0; j < 3; j++)
         {
-            cout << exf[i][j] << " ";
+            if (j == 0)
+            {
+                if (abs(exf[i][j] - assignedPositions[i] * 10) > 1e-5)
+                    errorCount += 1;
+            }
+            else
+            {
+                if (abs(exf[i][j] - 0.0) > 1e-5)
+                    errorCount += 1;
+            }
         }
-        cout << endl;
     }
     vector<Vec3> flex;
     flex = state2.getForces();
-    cout << "FlexiBLE force" << endl;
     for (int i = 0; i < flex.size(); i++)
     {
         for (int j = 0; j < 3; j++)
         {
-            cout << flex[i][j] << " ";
+            if (i == 3 && j == 0)
+            {
+                if (abs(flex[i][j] - 611.771) > 1e-5)
+                    errorCount += 1;
+            }
+            else if (i == 4 && j == 0)
+            {
+                if (abs(flex[i][j] + 611.771) > 1e-5)
+                    errorCount += 1;
+            }
         }
-        cout << endl;
     }
 }
 

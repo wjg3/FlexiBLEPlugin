@@ -130,7 +130,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 250; frameNum++)
+    for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
