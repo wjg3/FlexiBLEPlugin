@@ -178,7 +178,7 @@ void simulateWater()
     // Simulate.
     remove("WaterNoFlex.pdb");
     remove("WaterNoFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 10; frameNum++)
+    for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
@@ -194,7 +194,7 @@ void simulateWater()
         writePdbFrame(frameNum, state, pdbfile); // output coordinates
         writeVelocites(frameNum, state, velfile);
         // Advance state many steps at a time, for efficient use of OpenMM.
-        integrator.step(100); // (use a lot more than this normally)
+        integrator.step(1); // (use a lot more than this normally)
         if (frameNum == 90000)
         {
             data_out << setw(13) << left << timeInPs;
