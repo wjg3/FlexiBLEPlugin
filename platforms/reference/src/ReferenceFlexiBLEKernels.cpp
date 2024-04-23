@@ -83,6 +83,7 @@ void ReferenceCalcFlexiBLEForceKernel::initialize(const System &system, const Fl
     IterScales = force.GetScales();
     CutoffMethod = force.GetCutoffMethod();
     T = force.GetTemperature();
+    EnableValOutput = force.GetValOutput();
 }
 
 vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_VecMinus(vector<double> lhs, vector<double> rhs)
@@ -114,6 +115,29 @@ double ReferenceCalcFlexiBLEForceKernel::Calc_VecMod(vector<double> lhs)
     }
     double module = sqrt(result);
     return module;
+}
+
+vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_COM(vector<Vec3> Coordinates, int QMFlag, int group, int index)
+{
+    vector<double> COMCoordinate = {0.0, 0.0, 0.0};
+    double totalMass = 0.0;
+    InternalInfo Molecule;
+    if (QMFlag == 1)
+        Molecule = QMGroups[group][index];
+    else if (QMFlag == 0)
+        Molecule = MMGroups[group][index];
+
+    for (int i = 0; i < Molecule.Indices.size(); i++)
+    {
+        totalMass += Molecule.AtomMasses[i];
+        for (int j = 0; j < 3; j++)
+        {
+            COMCoordinate[j] += Molecule.AtomMasses[i] * Coordinates[Molecule.Indices[i]][j];
+        }
+    }
+    for (int i = 0; i < 3; i++)
+        COMCoordinate[i] /= totalMass;
+    return COMCoordinate;
 }
 
 void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, vector<vector<double>> &rCA_Vec, vector<Vec3> Coordinates, int iGroup, int TargetAtom, vector<vector<double>> &drCA)
@@ -159,11 +183,22 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
             double R = 0.0;
-            vector<double> tempVec;
+            vector<double> tempVec; // vector of center to molecule
+            vector<double> MoleculeVec;
+            if (TargetAtom == -1)
+            {
+                MoleculeVec = Calc_COM(Coordinates, 1, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    MoleculeVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
+            }
+
             for (int l = 0; l < 3; l++)
             {
-                tempVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l] - COM[l]);
-                R += pow(COM[l] - Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l], 2.0);
+                tempVec.emplace_back(MoleculeVec[l] - COM[l]);
+                R += pow(COM[l] - MoleculeVec[l], 2.0);
             }
             R = sqrt(R);
             pair<int, double> temp;
@@ -176,10 +211,20 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         {
             double R = 0.0;
             vector<double> tempVec;
+            vector<double> MoleculeVec;
+            if (TargetAtom == -1)
+            {
+                MoleculeVec = Calc_COM(Coordinates, 0, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    MoleculeVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
+            }
             for (int l = 0; l < 3; l++)
             {
-                tempVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l] - COM[l]);
-                R += pow(COM[l] - Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l], 2.0);
+                tempVec.emplace_back(MoleculeVec[l] - COM[l]);
+                R += pow(COM[l] - MoleculeVec[l], 2.0);
             }
             R = sqrt(R);
             pair<int, double> temp;
@@ -196,10 +241,20 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         {
             double R = 0.0;
             vector<double> tempVec;
+            vector<double> MoleculeVec;
+            if (TargetAtom == -1)
+            {
+                MoleculeVec = Calc_COM(Coordinates, 1, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    MoleculeVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
+            }
             for (int k = 0; k < 3; k++)
             {
-                tempVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][k] - BoundaryParameters[iGroup][k]);
-                R += pow(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][k] - BoundaryParameters[iGroup][k], 2.0);
+                tempVec.emplace_back(MoleculeVec[k] - BoundaryParameters[iGroup][k]);
+                R += pow(MoleculeVec[k] - BoundaryParameters[iGroup][k], 2.0);
             }
             R = sqrt(R);
             pair<int, double> temp;
@@ -212,10 +267,20 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         {
             double R = 0.0;
             vector<double> tempVec;
+            vector<double> MoleculeVec;
+            if (TargetAtom == -1)
+            {
+                MoleculeVec = Calc_COM(Coordinates, 0, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    MoleculeVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
+            }
             for (int k = 0; k < 3; k++)
             {
-                tempVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][k] - BoundaryParameters[iGroup][k]);
-                R += pow(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][k] - BoundaryParameters[iGroup][k], 2.0);
+                tempVec.emplace_back(MoleculeVec[k] - BoundaryParameters[iGroup][k]);
+                R += pow(MoleculeVec[k] - BoundaryParameters[iGroup][k], 2.0);
             }
             R = sqrt(R);
             pair<int, double> temp;
@@ -232,9 +297,14 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
             vector<double> rVec;
-            for (int k = 0; k < 3; k++)
+            if (TargetAtom == -1)
             {
-                rVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][k]);
+                rVec = Calc_COM(Coordinates, 1, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    rVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
             double R = 0.0;
             vector<double> tempVec;
@@ -268,9 +338,14 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int j = 0; j < MMGroups[iGroup].size(); j++)
         {
             vector<double> rVec;
-            for (int k = 0; k < 3; k++)
+            if (TargetAtom == -1)
             {
-                rVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][k]);
+                rVec = Calc_COM(Coordinates, 0, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    rVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
             double R = 0.0;
             vector<double> tempVec;
@@ -312,9 +387,14 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
             vector<double> pVec;
-            for (int k = 0; k < 3; k++)
+            if (TargetAtom == -1)
             {
-                pVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][k]);
+                pVec = Calc_COM(Coordinates, 1, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    pVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
             vector<double> RVec = Calc_VecMinus(L1, pVec);
             double RMod = Calc_VecMod(RVec);
@@ -356,9 +436,14 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int j = 0; j < MMGroups[iGroup].size(); j++)
         {
             vector<double> pVec;
-            for (int k = 0; k < 3; k++)
+            if (TargetAtom == -1)
             {
-                pVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][k]);
+                pVec = Calc_COM(Coordinates, 0, iGroup, j);
+            }
+            else if (TargetAtom >= 0)
+            {
+                for (int l = 0; l < 3; l++)
+                    pVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
             vector<double> RVec = Calc_VecMinus(L1, pVec);
             double RMod = Calc_VecMod(RVec);
@@ -405,17 +490,61 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
     }
 }
 
-void ReferenceCalcFlexiBLEForceKernel::Calc_dr(vector<pair<int, double>> rCA, vector<vector<double>> rCA_Vec, vector<vector<double>> &drCA)
+void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vector<pair<int, double>> rCA, vector<vector<double>> rCA_Vec, vector<vector<double>> &drCA)
 {
     drCA.clear();
-    for (int j = 0; j < rCA.size(); j++)
+    if (AtomDragged >= 0)
     {
-        vector<double> gradient;
-        for (int k = 0; k < 3; k++)
+        for (int i = 0; i < rCA.size(); i++)
         {
-            gradient.emplace_back(rCA_Vec[j][k] / rCA[j].second);
+            vector<double> gradient;
+            for (int k = 0; k < 3; k++)
+                gradient.emplace_back(rCA_Vec[i][k] / rCA[i].second);
+            drCA.emplace_back(gradient);
         }
-        drCA.emplace_back(gradient);
+    }
+    else if (AtomDragged == -1)
+    {
+        for (int j = 0; j < QMGroups[iGroup].size(); j++)
+        {
+            double totalMass = 0.0;
+            for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
+                totalMass += QMGroups[iGroup][j].AtomMasses[n];
+            vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
+            for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
+                dCOM.emplace_back(QMGroups[iGroup][j].AtomMasses[n] / totalMass);
+            vector<double> gradient; // Store the part of dr/dx(COM-origin)
+            for (int k = 0; k < 3; k++)
+                gradient.emplace_back(rCA_Vec[j][k] / rCA[j].second);
+
+            for (int n = 0; n < dCOM.size(); n++)
+            {
+                vector<double> tempGrad;
+                for (int k = 0; k < 3; k++)
+                    tempGrad.emplace_back(gradient[k] * dCOM[n]);
+                drCA.emplace_back(tempGrad);
+            }
+        }
+        for (int j = 0; j < MMGroups[iGroup].size(); j++)
+        {
+            double totalMass = 0.0;
+            for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
+                totalMass += MMGroups[iGroup][j].AtomMasses[n];
+            vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
+            for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
+                dCOM.emplace_back(MMGroups[iGroup][j].AtomMasses[n] / totalMass);
+            vector<double> gradient;
+            for (int k = 0; k < 3; k++)
+                gradient.emplace_back(rCA_Vec[j + QMGroups[iGroup].size()][k] / rCA[j + QMGroups[iGroup].size()].second);
+
+            for (int n = 0; n < dCOM.size(); n++)
+            {
+                vector<double> tempGrad;
+                for (int k = 0; k < 3; k++)
+                    tempGrad.emplace_back(gradient[k] * dCOM[n]);
+                drCA.emplace_back(tempGrad);
+            }
+        }
     }
 }
 
@@ -616,57 +745,59 @@ void ReferenceCalcFlexiBLEForceKernel::ProdChild(unordered_set<string> &Nodes, s
     }
 }
 
-void ReferenceCalcFlexiBLEForceKernel::TestNumeDeno(int EnableTestOutput, double Nume, vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, vector<double> NumeForce, vector<double> DenoForce, double DenoNow, double DenoLast, vector<Vec3> Forces)
+void ReferenceCalcFlexiBLEForceKernel::TestNumeDeno(int EnableValOutput, double Nume, vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, vector<double> NumeForce, vector<double> DenoForce, double DenoNow, double DenoLast, vector<Vec3> Forces)
 {
-    remove("Nume&Deno.txt");
-    fstream fout("Nume&Deno.txt", ios::out);
-    fout << "This plugin is based on Zhuofan Shen and William J. Glover's work published on J. Chem. Phy., the paper mentioned in README must be cited if using this plugin in research. " << endl;
-    fout << "Parameters" << endl;
-    fout << "alpha= " << alpha << endl;
-    fout << "h_thre= " << h << endl;
-    fout << "Scale= " << scale << endl;
-    fout << "QMSize= " << QMSize << endl;
-    fout << "MMSize= " << MMSize << endl;
-    fout << "Results" << endl;
-    fout << "h(Numerator)= " << Nume << endl;
-    fout << "Numerator_derivative" << endl;
-    for (int i = 0; i < NumeForce.size(); i++)
+    if (EnableValOutput == 1)
     {
-        if (i == 0)
-            fout << NumeForce[i];
-        else
-            fout << " " << NumeForce[i];
-    }
-    fout << endl;
-    fout << "h_list" << endl;
-    for (int i = 0; i < h_list.size(); i++)
-    {
-        if (i == 0)
-            fout << h_list[i];
-        else
-            fout << " " << h_list[i];
-    }
-    fout << endl;
-    // fout << "Node_list" << endl;
-    // for (const auto &node : NodeList)
-    //{
-    //     fout << node << endl;
-    // }
-    fout << setprecision(12) << "Last_Denominator= " << DenoLast << endl;
-    fout << setprecision(12) << "Final_Denominator= " << DenoNow << endl;
-    fout << "Denominator_derivative" << endl;
-    for (int i = 0; i < DenoForce.size(); i++)
-    {
-        if (i == 0)
-            fout << DenoForce[i];
-        else
-            fout << " " << DenoForce[i];
-    }
-    fout << endl;
-    fout << "Force" << endl;
-    for (int i = 0; i < Forces.size(); i++)
-    {
-        fout << i << " " << fixed << setprecision(12) << Forces[i][0] << " " << fixed << setprecision(12) << Forces[i][1] << " " << fixed << setprecision(12) << Forces[i][2] << endl;
+        remove("Nume&Deno.txt");
+        fstream fout("Nume&Deno.txt", ios::out);
+        fout << "Parameters" << endl;
+        fout << "alpha= " << alpha << endl;
+        fout << "h_thre= " << h << endl;
+        fout << "Scale= " << scale << endl;
+        fout << "QMSize= " << QMSize << endl;
+        fout << "MMSize= " << MMSize << endl;
+        fout << "Results" << endl;
+        fout << "h(Numerator)= " << Nume << endl;
+        fout << "Numerator_derivative" << endl;
+        for (int i = 0; i < NumeForce.size(); i++)
+        {
+            if (i == 0)
+                fout << NumeForce[i];
+            else
+                fout << " " << NumeForce[i];
+        }
+        fout << endl;
+        fout << "h_list" << endl;
+        for (int i = 0; i < h_list.size(); i++)
+        {
+            if (i == 0)
+                fout << h_list[i];
+            else
+                fout << " " << h_list[i];
+        }
+        fout << endl;
+        // fout << "Node_list" << endl;
+        // for (const auto &node : NodeList)
+        //{
+        //     fout << node << endl;
+        // }
+        fout << setprecision(12) << "Last_Denominator= " << DenoLast << endl;
+        fout << setprecision(12) << "Final_Denominator= " << DenoNow << endl;
+        fout << "Denominator_derivative" << endl;
+        for (int i = 0; i < DenoForce.size(); i++)
+        {
+            if (i == 0)
+                fout << DenoForce[i];
+            else
+                fout << " " << DenoForce[i];
+        }
+        fout << endl;
+        fout << "Force" << endl;
+        for (int i = 0; i < Forces.size(); i++)
+        {
+            fout << i << " " << fixed << setprecision(12) << Forces[i][0] << " " << fixed << setprecision(12) << Forces[i][1] << " " << fixed << setprecision(12) << Forces[i][2] << endl;
+        }
     }
 }
 
@@ -684,7 +815,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
         if (QMGroups[i].size() != 0 && MMGroups[i].size() != 0)
         {
             // Decide which atom to apply force to
-            int AtomDragged = -1;
+            int AtomDragged = -2;
             if (AssignedAtomIndex.size() > 0)
                 AtomDragged = AssignedAtomIndex[i];
             else if (AssignedAtomIndex.size() == 0)
@@ -739,10 +870,11 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             // Store the distance from atom to the boundary center, the extension "re" means
             // the order is rearranged by the distance from center to atom.
             // vector<pair<int, double>> rCenter_Atom;
-            vector<pair<int, double>> rCenter_Atom;
+            vector<pair<int, double>> rCenter_Atom; // Dimension matches the number of molecules
             vector<pair<int, double>> rCenter_Atom_re;
-            // Store the vector from boundary center to atom
+            // Store the vector from boundary center to atom or molecule COM
             vector<vector<double>> rCenter_Atom_Vec;
+            // The derivative
             vector<vector<double>> drCenter_Atom_Vec;
             Calc_r(rCenter_Atom, rCenter_Atom_Vec, Positions, i, AtomDragged, drCenter_Atom_Vec);
             // Keep one in order of original index
@@ -769,7 +901,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                     rCenter_Atom[rCenter_Atom_re[j].first].second = minDistance;
                 }
             }
-            Calc_dr(rCenter_Atom, rCenter_Atom_Vec, drCenter_Atom_Vec);
+            Calc_dr(i, AtomDragged, rCenter_Atom, rCenter_Atom_Vec, drCenter_Atom_Vec);
             // Check if the reordering is working
             TestReordering(EnableTestOutput, i, AtomDragged, Positions, rCenter_Atom_re, COM);
             // Start the force and energy calculation
@@ -781,7 +913,11 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             const double AlphaNow = Coefficients[i];
             const int QMSize = QMGroups[i].size();
             const int MMSize = MMGroups[i].size();
+            const int NAtoms = QMGroups[i][0].Indices.size();
             vector<Vec3> ForceList(QMSize + MMSize, Vec3(0.0, 0.0, 0.0));
+            if (AtomDragged == -1)
+                ForceList.resize((QMSize + MMSize) * NAtoms, Vec3(0.0, 0.0, 0.0));
+
             vector<double> hList_re(QMSize + MMSize, 0.0);
             // Store the exponential part's value and derivative over distance of pair functions
             vector<vector<gInfo>> gExpPart;
@@ -909,7 +1045,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         {
                             coorOut << fixed << setprecision(10) << Positions[k][0] << " " << Positions[k][1] << " " << Positions[k][2] << endl;
                         }
-                        TestNumeDeno(EnableTestOutput, NumeVal, hList_re, AlphaNow, h, ScaleFactor, QMSize, MMSize, dNume_dr, dDen_dr, DenNow, DenLast, ForceList);
+                        TestNumeDeno(EnableValOutput, NumeVal, hList_re, AlphaNow, h, ScaleFactor, QMSize, MMSize, dNume_dr, dDen_dr, DenNow, DenLast, ForceList);
                     }
                     if ((DenNow - DenLast) > gamma * DenLast)
                     {
@@ -927,23 +1063,40 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
             // Calculate force based on above
             for (int j = 0; j < QMSize + MMSize; j++)
             {
-                df_dr[j] = (1 / NumeVal) * dNume_dr[j] - (1 / DenVal) * dDen_dr[j];
+                df_dr[j] = (1.0 / NumeVal) * dNume_dr[j] - (1.0 / DenVal) * dDen_dr[j];
             }
+
             for (int j = 0; j < QMSize; j++)
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    ForceList[j][k] = drCenter_Atom_Vec[j][k] * df_dr[j];
+                    if (AtomDragged >= 0)
+                        ForceList[j][k] = drCenter_Atom_Vec[j][k] * df_dr[j];
+                    else if (AtomDragged == -1)
+                    {
+                        for (int n = 0; n < NAtoms; n++)
+                        {
+                            ForceList[j * NAtoms + n][k] = drCenter_Atom_Vec[j * NAtoms + n][k] * df_dr[j];
+                        }
+                    }
                 }
             }
             for (int j = QMSize; j < QMSize + MMSize; j++)
             {
                 for (int k = 0; k < 3; k++)
                 {
-                    ForceList[j][k] = drCenter_Atom_Vec[j][k] * df_dr[j];
+                    if (AtomDragged >= 0)
+                        ForceList[j][k] = drCenter_Atom_Vec[j][k] * df_dr[j];
+                    else if (AtomDragged == -1)
+                    {
+                        for (int n = 0; n < NAtoms; n++)
+                        {
+                            ForceList[j * NAtoms + n][k] = drCenter_Atom_Vec[j * NAtoms + n][k] * df_dr[j];
+                        }
+                    }
                 }
             }
-            TestNumeDeno(EnableTestOutput, NumeVal, hList_re, AlphaNow, gamma, ScaleFactor, QMSize, MMSize, dNume_dr, dDen_dr, DenNow, DenLast, ForceList);
+            TestNumeDeno(EnableValOutput, NumeVal, hList_re, AlphaNow, gamma, ScaleFactor, QMSize, MMSize, dNume_dr, dDen_dr, DenNow, DenLast, ForceList);
 
             // Add energy to system
             double Coe = 1.3807e-23 * T * 6.02214179e+23 / 1000.0; // kB*T, but with the unit of kJ/mol, so it's actually R*T
@@ -957,13 +1110,35 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 {
                     if (j < QMSize)
                     {
-                        int realIndex = QMGroups[i][j].Indices[AtomDragged];
-                        Force[realIndex][k] += Coe * ForceList[j][k];
+                        if (AtomDragged >= 0)
+                        {
+                            int realIndex = QMGroups[i][j].Indices[AtomDragged];
+                            Force[realIndex][k] += Coe * ForceList[j][k];
+                        }
+                        else if (AtomDragged == -1)
+                        {
+                            for (int n = 0; n < NAtoms; n++)
+                            {
+                                int realIndex = QMGroups[i][j].Indices[n];
+                                Force[realIndex][k] += Coe * ForceList[j * NAtoms + n][k];
+                            }
+                        }
                     }
                     else
                     {
-                        int realIndex = MMGroups[i][j - QMSize].Indices[AtomDragged];
-                        Force[realIndex][k] += Coe * ForceList[j][k];
+                        if (AtomDragged >= 0)
+                        {
+                            int realIndex = MMGroups[i][j - QMSize].Indices[AtomDragged];
+                            Force[realIndex][k] += Coe * ForceList[j][k];
+                        }
+                        else if (AtomDragged == -1)
+                        {
+                            for (int n = 0; n < NAtoms; n++)
+                            {
+                                int realIndex = MMGroups[i][j - QMSize].Indices[n];
+                                Force[realIndex][k] += Coe * ForceList[j * NAtoms + n][k];
+                            }
+                        }
                     }
                 }
             }

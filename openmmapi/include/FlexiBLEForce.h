@@ -45,6 +45,14 @@ namespace FlexiBLE
         {
             return IfEnableTestOutput;
         }
+        void SetValOutput(int inputVar)
+        {
+            IfEnableValOutput = inputVar;
+        }
+        int GetValOutput() const
+        {
+            return IfEnableValOutput;
+        }
         // Set center of each boundary
         // void SetCenters(std::vector<std::vector<double>> InputCenters)
         //{
@@ -334,6 +342,7 @@ namespace FlexiBLE
         int CutoffMethod = 0;
         double Temperature = 300;
         int IfSetTemperature = 0;
+        int IfEnableValOutput = 0;
     };
 
     /**

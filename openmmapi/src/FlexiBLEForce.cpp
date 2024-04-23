@@ -185,7 +185,7 @@ void FlexiBLEForce::CheckForce() const
                 }
                 else
                     TotalAtoms = QMMolecules[i][0].AtomIndices.size();
-                if (TotalAtoms <= TargetAtoms[i] || TargetAtoms[i] < 0)
+                if (TotalAtoms <= TargetAtoms[i])
                     throw OpenMMException("FlexiBLE - Checking Force: The index apply force to is wrong");
             }
         }

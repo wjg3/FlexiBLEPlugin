@@ -75,10 +75,11 @@ namespace FlexiBLE
         std::vector<double> Calc_VecMinus(std::vector<double> lhs, std::vector<double> rhs);
         double Calc_VecDot(std::vector<double> lhs, std::vector<double> rhs);
         double Calc_VecMod(std::vector<double> lhs);
+        std::vector<double> Calc_COM(std::vector<OpenMM::Vec3> Coordinates, int QMFlag, int group, int index);
         // Calculate the distance between atom and the boundary center
         void Calc_r(std::vector<std::pair<int, double>> &rCA, std::vector<std::vector<double>> &rCA_Vec, std::vector<OpenMM::Vec3> Coordinates, int iGroup, int TargetAtom, std::vector<std::vector<double>> &drCA);
         // Calculate the derivative of r over coordinates
-        void Calc_dr(std::vector<std::pair<int, double>> rCA, std::vector<std::vector<double>> rCA_Vec, std::vector<std::vector<double>> &drCA);
+        void Calc_dr(int iGroup, int AtomDragged, std::vector<std::pair<int, double>> rCA, std::vector<std::vector<double>> rCA_Vec, std::vector<std::vector<double>> &drCA);
         // This function is here to test the reordering part with function "execute".
         void TestReordering(int Switch, int GroupIndex, int DragIndex, std::vector<OpenMM::Vec3> coor, std::vector<std::pair<int, double>> rAtom, std::vector<double> COM);
 
@@ -97,18 +98,19 @@ namespace FlexiBLE
 
         int FindRepeat(std::unordered_set<std::string> Nodes, std::string InputNode);
 
-        void TestNumeDeno(int EnableTestOutput, double Nume, std::vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, std::vector<double> NumeForce, std::vector<double> DenoForce, double DenoNow, double DenoLast, std::vector<OpenMM::Vec3> Forces);
+        void TestNumeDeno(int EnableValOutput, double Nume, std::vector<double> h_list, double alpha, double h, double scale, int QMSize, int MMSize, std::vector<double> NumeForce, std::vector<double> DenoForce, double DenoNow, double DenoLast, std::vector<OpenMM::Vec3> Forces);
 
     private:
-        class InternalIndices;
-        std::vector<std::vector<InternalIndices>> QMGroups;
-        std::vector<std::vector<InternalIndices>> MMGroups;
+        class InternalInfo;
+        std::vector<std::vector<InternalInfo>> QMGroups;
+        std::vector<std::vector<InternalInfo>> MMGroups;
         std::vector<int> AssignedAtomIndex;
         std::vector<double> Coefficients;
         std::vector<double> COM;
         int BoundaryShape = 0;
         std::vector<std::vector<double>> BoundaryParameters;
         int EnableTestOutput = 0;
+        int EnableValOutput = 0;
         std::vector<double> hThre;
         // std::vector<double> IterGamma;
         std::vector<int> FlexiBLEMaxIt;
@@ -121,13 +123,12 @@ namespace FlexiBLE
         // double time_calc = 0.0;
         // double nodeConvert = 0.0;
     };
-    class ReferenceCalcFlexiBLEForceKernel::InternalIndices
+    class ReferenceCalcFlexiBLEForceKernel::InternalInfo
     {
     public:
         std::vector<int> Indices;
         std::vector<double> AtomMasses;
     };
-
 } // namespace FlexiBLE
 
 #endif /*REFERENCE_FLEXIBLE_KERNELS_H_*/
