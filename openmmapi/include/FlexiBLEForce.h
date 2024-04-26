@@ -346,7 +346,7 @@ namespace FlexiBLE
     };
 
     /**
-     * This is an internal class used to record information about what particles (indices) are in a molecular.
+     * This is an internal class used to record information about indices of a molecular.
      * @private
      */
     class FlexiBLEForce::MoleculeInfo
