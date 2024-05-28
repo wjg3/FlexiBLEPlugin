@@ -188,7 +188,7 @@ void simulateWater()
     boundary->SetTemperature(300.0);
     system.addForce(boundary);
 
-    LangevinMiddleIntegrator integrator(300.0, 1, 0.001); // step size in ps
+    VerletIntegrator integrator(0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -206,7 +206,7 @@ void simulateWater()
     // Simulate.
     remove("WaterFlex.pdb");
     remove("WaterFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 1; frameNum++)
+    for (int frameNum = 1; frameNum <= 10; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

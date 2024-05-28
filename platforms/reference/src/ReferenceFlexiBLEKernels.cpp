@@ -337,12 +337,11 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
 
         vector<double> LVec = {BoundaryParameters[iGroup][0], BoundaryParameters[iGroup][1], BoundaryParameters[iGroup][2]};
         vector<double> halfLVec;
-
         for (int i = 0; i < 3; i++)
             halfLVec.emplace_back(LVec[i] / 2.0);
 
         double LMod = Calc_VecMod(LVec);
-        vector<double> L1 = Calc_VecMinus(COM, halfLVec);
+        vector<double> L1 = Calc_VecMinus(halfLVec, COM);
         vector<double> L2 = Calc_VecSum(COM, halfLVec);
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {

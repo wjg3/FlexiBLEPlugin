@@ -68,10 +68,11 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
+    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.7)^2; r=sqrt(x*x+y*y+z*z)");
     FlexiBLEForce *boundary = new FlexiBLEForce();
     vector<int> InputQMIndices = {0, 1, 3, 4, 14, 17, 29, 43, 44, 55, 84, 89, 92, 111, 125, 128, 140, 163, 170, 195};
-    vector<int> InputMLInfo = {20, 1};
+    vector<int> CapQMIndices = {0, 1, 3, 4, 17, 29, 42, 43, 44, 84, 89, 92, 111, 125, 128, 140, 142, 163, 164, 170};
+    vector<int> InputMLInfo = {200, 1};
     vector<int> AssignedIndex = {0};
     vector<double> InputThre = {1e-5};
     vector<int> InputMaxIt = {10};
@@ -79,8 +80,9 @@ void simulateNeon()
     vector<double> InputAlphas = {50.0};
     vector<vector<double>> Center = {{0.0, 0.0, 0.0}};
     vector<vector<double>> line = {{-0.1, 0.1}};
-    vector<vector<double>> Capsule = {{-0.1, 0.0, 0.0, 0.1, 0.0, 0.0}};
-    boundary->SetQMIndices(InputQMIndices);
+    vector<vector<double>> CapsuleCOM = {{0.4, 0.0, 0.0}};
+    vector<vector<double>> Capsule = {{-0.2, 0.0, 0.0, 0.2, 0.0, 0.0}};
+    boundary->SetQMIndices(CapQMIndices);
     boundary->SetMoleculeInfo(InputMLInfo);
     boundary->SetAssignedIndex(AssignedIndex);
     boundary->GroupingMolecules();
@@ -88,15 +90,15 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetBoundaryType(1, Center);
+    boundary->SetBoundaryType(0, CapsuleCOM);
     // boundary->SetBoundaryType(2, line);
     // boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
-    system.addForce(exforce);
-    // Create three atoms.
+    // system.addForce(exforce);
+    //  Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
@@ -130,7 +132,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 1; frameNum++)
+    for (int frameNum = 1; frameNum <= 1000; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

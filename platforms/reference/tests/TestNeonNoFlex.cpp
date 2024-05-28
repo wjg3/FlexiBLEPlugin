@@ -64,9 +64,9 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    // CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
+    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.7)^2; r=sqrt(x*x+y*y+z*z)");
     // system.addForce(exforce);
-    //  Create three atoms.
+    //   Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
@@ -79,7 +79,7 @@ void simulateNeon()
             system.addParticle(20.1797);
         // charge, L-J sigma (nm), well depth (kJ)
         nonbond->addParticle(0.0, 0.2782, 0.298); // vdWRad(Ar)=.188 nm
-        // exforce->addParticle(a, vector<double>());
+        exforce->addParticle(a, vector<double>());
     }
 
     VerletIntegrator integrator(0.004); // step size in ps
@@ -99,7 +99,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonNoFlex.pdb");
     remove("NeonNoFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 1; frameNum++)
+    for (int frameNum = 1; frameNum <= 1000; frameNum++)
     {
         // Output current state information.
         State state = context->getState(State::Positions | State::Forces | State::Energy | State::Velocities);
