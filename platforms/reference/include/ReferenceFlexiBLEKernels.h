@@ -75,6 +75,7 @@ namespace FlexiBLE
         std::vector<double> Calc_VecMinus(std::vector<double> lhs, std::vector<double> rhs);
         double Calc_VecDot(std::vector<double> lhs, std::vector<double> rhs);
         double Calc_VecMod(std::vector<double> lhs);
+        std::vector<double> Calc_VecSum(std::vector<double> lhs, std::vector<double> rhs);
         std::vector<double> Calc_COM(std::vector<OpenMM::Vec3> Coordinates, int QMFlag, int group, int index);
         // Calculate the distance between atom and the boundary center
         void Calc_r(std::vector<std::pair<int, double>> &rCA, std::vector<std::vector<double>> &rCA_Vec, std::vector<OpenMM::Vec3> Coordinates, int iGroup, int TargetAtom, std::vector<std::vector<double>> &drCA);

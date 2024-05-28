@@ -2,7 +2,7 @@
 # OpenMM FlexiBLE Plugin
 #----------------------------------------------------
 
-CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 
 PROJECT(FlexiBLEPlugin)
 
@@ -83,6 +83,7 @@ ENABLE_TESTING()
 # Build the implementations for different platforms
 
 ADD_SUBDIRECTORY(platforms/reference)
+#ADD_SUBDIRECTORY(platforms/cpu)
 #ADD_SUBDIRECTORY(platforms/common)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")

@@ -271,7 +271,7 @@ namespace FlexiBLE
         /*Function for setting the type of boundaries:
         0 for COM, which is calculated by the program itself
         1 for user defined center, input should be a point
-        2 for capsule located on x-axis, input should be two endpoints of the center line
+        2 for capsule located on COM, input should be vector of the capsule
         3 for capsule shape boundary, input should be two endpoints of the center line
         4 for molecule surface, input should be the coordinates of the molecule surface
         PS: for option 1, 2 and 3, the number of boundaries should match the number of molecule types

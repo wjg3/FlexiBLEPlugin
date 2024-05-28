@@ -1,13 +1,10 @@
 #include "OpenMM.h"
-#include "FlexiBLEForce.h"
-#include "FlexiBLEKernels.h"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
 #include "PosVec.h"
 using namespace std;
-using namespace FlexiBLE;
 using namespace OpenMM;
 
 void writePdbFrame(int frameNum, const State &state, string fileName)
@@ -91,7 +88,7 @@ void simulateNeon()
     system.addForce(nonbond);
     CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.55)^2; r=sqrt(x*x+y*y+z*z)");
     system.addForce(exforce);
-    // Create three atoms.
+    //  Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
@@ -116,6 +113,7 @@ void simulateNeon()
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
+    
     // printf("REMARK  Using OpenMM platform %s\n",
     //        context.getPlatform().getName().c_str());
 

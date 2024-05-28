@@ -11,9 +11,9 @@
 using namespace FlexiBLE;
 using namespace OpenMM;
 
-extern "C" OPENMM_EXPORT void registerPlatforms() {}
+extern "C" void registerPlatforms() {}
 
-extern "C" OPENMM_EXPORT void registerKernelFactories()
+extern "C" void registerKernelFactories()
 {
     for (int i = 0; i < Platform::getNumPlatforms(); i++)
     {
@@ -26,7 +26,7 @@ extern "C" OPENMM_EXPORT void registerKernelFactories()
     }
 }
 
-extern "C" OPENMM_EXPORT void registerFlexiBLEReferenceKernelFactories()
+extern "C" void registerFlexiBLEReferenceKernelFactories()
 {
     registerKernelFactories();
 }

@@ -1,6 +1,6 @@
 #include "OpenMM.h"
 #include "FlexiBLEForce.h"
-// #include "FlexiBLEKernels.h"
+#include "FlexiBLEKernels.h"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
@@ -84,7 +84,8 @@ void writeVelocites(int frameNum, const State &state, string fileName)
 
 void simulateNeon()
 {
-    Platform &platform = Platform::getPlatformByName("Reference");
+    OpenMM::Platform::loadPluginsFromDirectory(
+        OpenMM::Platform::getDefaultPluginsDirectory());
     fstream data_out("NA_Flex.txt", ios::out);
     // Create a system with nonbonded forces.
     System system;
@@ -137,7 +138,8 @@ void simulateNeon()
     LangevinIntegrator integrator(163, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
-    Context context(system, integrator);
+    Platform &platform = Platform::getPlatformByName("CPU");
+    Context context(system, integrator, platform);
     // printf("REMARK  Using OpenMM platform %s\n",
     //        context.getPlatform().getName().c_str());
 
@@ -152,7 +154,7 @@ void simulateNeon()
     // Simulate.
     remove("NAFlex.pdb");
     remove("NAFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 10; frameNum++)
+    for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

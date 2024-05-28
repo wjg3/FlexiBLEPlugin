@@ -96,6 +96,16 @@ vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_VecMinus(vector<double> lh
     return result;
 }
 
+std::vector<double> Calc_VecSum(std::vector<double> lhs, std::vector<double> rhs)
+{
+    vector<double> result;
+    for (int i = 0; i < 3; i++)
+    {
+        result.emplace_back(rhs[i] + lhs[i]);
+    }
+    return result;
+}
+
 double ReferenceCalcFlexiBLEForceKernel::Calc_VecDot(vector<double> lhs, vector<double> rhs)
 {
     double result = 0.0;
@@ -290,94 +300,150 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
             rCA_Vec.emplace_back(tempVec);
         }
     }
-    // Use a capsule boundary defined by a line segment as the center, but the line segment is fixed on x-axis.
+    // Use a capsule boundary defined by a line segment as the center, but the center of it is the COM.
     else if (BoundaryShape == 2)
     {
-        double CapsuleLength = BoundaryParameters[iGroup][1] - BoundaryParameters[iGroup][0];
+        COM = {0.0, 0.0, 0.0}; // Initialize it
+
+        // Calculate the center of mass
+        double TotalMass = 0.0;
+        for (int i = 0; i < QMGroups.size(); i++)
+        {
+            for (int j = 0; j < QMGroups[i].size(); j++)
+            {
+                for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
+                {
+                    TotalMass += QMGroups[i][j].AtomMasses[k];
+                    for (int l = 0; l < 3; l++)
+                    {
+                        COM[l] += QMGroups[i][j].AtomMasses[k] * Coordinates[QMGroups[i][j].Indices[k]][l];
+                    }
+                }
+            }
+            for (int j = 0; j < MMGroups[i].size(); j++)
+            {
+                for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
+                {
+                    TotalMass += MMGroups[i][j].AtomMasses[k];
+                    for (int l = 0; l < 3; l++)
+                    {
+                        COM[l] += MMGroups[i][j].AtomMasses[k] * Coordinates[MMGroups[i][j].Indices[k]][l];
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < 3; i++)
+            COM[i] /= TotalMass;
+
+        vector<double> LVec = {BoundaryParameters[iGroup][0], BoundaryParameters[iGroup][1], BoundaryParameters[iGroup][2]};
+        vector<double> halfLVec;
+
+        for (int i = 0; i < 3; i++)
+            halfLVec.emplace_back(LVec[i] / 2.0);
+
+        double LMod = Calc_VecMod(LVec);
+        vector<double> L1 = Calc_VecMinus(COM, halfLVec);
+        vector<double> L2 = Calc_VecSum(COM, halfLVec);
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
-            vector<double> rVec;
+            vector<double> pVec;
             if (TargetAtom == -1)
             {
-                rVec = Calc_COM(Coordinates, 1, iGroup, j);
+                pVec = Calc_COM(Coordinates, 1, iGroup, j);
             }
             else if (TargetAtom >= 0)
             {
                 for (int l = 0; l < 3; l++)
-                    rVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
+                    pVec.emplace_back(Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
+            vector<double> RVec = Calc_VecMinus(L1, pVec);
+            double RMod = Calc_VecMod(RVec);
+            double lMod = Calc_VecDot(RVec, LVec) / LMod;
             double R = 0.0;
             vector<double> tempVec;
             pair<int, double> temp;
-            if (rVec[0] <= BoundaryParameters[iGroup][1] && rVec[0] >= BoundaryParameters[iGroup][0])
+            if (lMod < LMod && lMod > 0)
             {
-                R = rVec[1] * rVec[1] + rVec[2] * rVec[2];
-                R = sqrt(R);
+                R = sqrt(max(RMod * RMod - lMod * lMod, 0.0));
                 temp.first = j;
                 temp.second = R;
-                tempVec = {0.0, rVec[1], rVec[2]};
+                vector<double> intersection;
+                for (int k = 0; k < 3; k++)
+                {
+                    intersection.emplace_back(L1[k] + LVec[k] * (lMod / LMod));
+                }
+                tempVec = Calc_VecMinus(intersection, pVec);
                 rCA.emplace_back(temp);
                 rCA_Vec.emplace_back(tempVec);
             }
-            else if (rVec[0] > BoundaryParameters[iGroup][1] || rVec[0] < BoundaryParameters[iGroup][0])
+            else if (lMod <= 0 || lMod >= LMod)
             {
-                double dx = 0.0;
-                if (rVec[0] > BoundaryParameters[iGroup][1])
-                    dx = rVec[0] - BoundaryParameters[iGroup][1];
-                else if (rVec[0] < BoundaryParameters[iGroup][0])
-                    dx = rVec[0] - BoundaryParameters[iGroup][0];
-                R = dx * dx + rVec[1] * rVec[1] + rVec[2] * rVec[2];
-                R = sqrt(R);
+                if (lMod <= 0)
+                {
+                    tempVec = RVec;
+                }
+                else if (lMod >= LMod)
+                {
+                    tempVec = Calc_VecMinus(L2, pVec);
+                }
+                R = Calc_VecMod(tempVec);
                 temp.first = j;
                 temp.second = R;
-                tempVec = {dx, rVec[1], rVec[2]};
                 rCA.emplace_back(temp);
                 rCA_Vec.emplace_back(tempVec);
             }
         }
         for (int j = 0; j < MMGroups[iGroup].size(); j++)
         {
-            vector<double> rVec;
+            vector<double> pVec;
             if (TargetAtom == -1)
             {
-                rVec = Calc_COM(Coordinates, 0, iGroup, j);
+                pVec = Calc_COM(Coordinates, 0, iGroup, j);
             }
             else if (TargetAtom >= 0)
             {
                 for (int l = 0; l < 3; l++)
-                    rVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
+                    pVec.emplace_back(Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l]);
             }
+            vector<double> RVec = Calc_VecMinus(L1, pVec);
+            double RMod = Calc_VecMod(RVec);
+            double lMod = Calc_VecDot(RVec, LVec) / LMod;
             double R = 0.0;
             vector<double> tempVec;
             pair<int, double> temp;
-            if (rVec[0] <= BoundaryParameters[iGroup][1] && rVec[0] >= BoundaryParameters[iGroup][0])
+            if (lMod < LMod && lMod > 0)
             {
-                R = rVec[1] * rVec[1] + rVec[2] * rVec[2];
-                R = sqrt(R);
+                R = sqrt(RMod * RMod - lMod * lMod);
                 temp.first = j + QMGroups[iGroup].size();
                 temp.second = R;
-                tempVec = {0.0, rVec[1], rVec[2]};
+                vector<double> intersection;
+                for (int k = 0; k < 3; k++)
+                {
+                    intersection.emplace_back(L1[k] + LVec[k] * (lMod / LMod));
+                }
+                tempVec = Calc_VecMinus(intersection, pVec);
                 rCA.emplace_back(temp);
                 rCA_Vec.emplace_back(tempVec);
             }
-            else if (rVec[0] > BoundaryParameters[iGroup][1] || rVec[0] < BoundaryParameters[iGroup][0])
+            else if (lMod <= 0 || lMod >= LMod)
             {
-                double dx = 0.0;
-                if (rVec[0] > BoundaryParameters[iGroup][1])
-                    dx = rVec[0] - BoundaryParameters[iGroup][1];
-                else if (rVec[0] < BoundaryParameters[iGroup][0])
-                    dx = rVec[0] - BoundaryParameters[iGroup][0];
-                R = dx * dx + rVec[1] * rVec[1] + rVec[2] * rVec[2];
-                R = sqrt(R);
-                temp.first = j;
+                if (lMod <= 0)
+                {
+                    tempVec = RVec;
+                }
+                else if (lMod >= LMod)
+                {
+                    tempVec = Calc_VecMinus(L2, pVec);
+                }
+                R = Calc_VecMod(tempVec);
+                temp.first = j + QMGroups[iGroup].size();
                 temp.second = R;
-                tempVec = {dx, rVec[1], rVec[2]};
                 rCA.emplace_back(temp);
                 rCA_Vec.emplace_back(tempVec);
             }
         }
     }
-    // Use a capsule boundary defined by a line segment as the center, line segment is freely defined in space.
+    // Use a capsule boundary defined by a line segment as the center, line segment is freely defined in space, the center is fixed on a given point.
     else if (BoundaryShape == 3)
     {
         vector<double> L1 = {BoundaryParameters[iGroup][0], BoundaryParameters[iGroup][1], BoundaryParameters[iGroup][2]};

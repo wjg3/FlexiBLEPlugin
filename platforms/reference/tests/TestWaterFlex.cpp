@@ -206,7 +206,7 @@ void simulateWater()
     // Simulate.
     remove("WaterFlex.pdb");
     remove("WaterFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 10; frameNum++)
+    for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

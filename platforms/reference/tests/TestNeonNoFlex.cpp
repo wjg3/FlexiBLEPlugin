@@ -1,13 +1,10 @@
 #include "OpenMM.h"
-#include "FlexiBLEForce.h"
-#include "FlexiBLEKernels.h"
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
 #include <fstream>
 #include "PosVec.h"
 using namespace std;
-using namespace FlexiBLE;
 using namespace OpenMM;
 
 void writePdbFrame(int frameNum, const State &state, string fileName)
@@ -67,8 +64,8 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
-    system.addForce(exforce);
+    //CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
+    //system.addForce(exforce);
     // Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
@@ -82,19 +79,19 @@ void simulateNeon()
             system.addParticle(20.1797);
         // charge, L-J sigma (nm), well depth (kJ)
         nonbond->addParticle(0.0, 0.2782, 0.298); // vdWRad(Ar)=.188 nm
-        exforce->addParticle(a, vector<double>());
+        //exforce->addParticle(a, vector<double>());
     }
 
     VerletIntegrator integrator(0.004); // step size in ps
 
     // Let OpenMM Context choose best platform.
-    Context context(system, integrator);
-    // printf("REMARK  Using OpenMM platform %s\n",
-    //        context.getPlatform().getName().c_str());
+    Context *context = new Context(system, integrator, Platform::getPlatformByName("CPU"));
+    printf("REMARK  Using OpenMM platform %s\n",
+            context->getPlatform().getName().c_str());
 
     // Set starting positions of the atoms. Leave time and velocity zero.
-    context.setPositions(initPosInNm);
-    context.setVelocities(initVelocities);
+    context->setPositions(initPosInNm);
+    context->setVelocities(initVelocities);
     data_out << "time (ps)    "
              << "KE (kJ/mol)    "
              << "PE (kJ/mol)    "
@@ -105,7 +102,7 @@ void simulateNeon()
     for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
-        State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
+        State state = context->getState(State::Positions | State::Forces | State::Energy | State::Velocities);
         const double timeInPs = state.getTime();
         double KE = state.getKineticEnergy();
         double PE = state.getPotentialEnergy();
