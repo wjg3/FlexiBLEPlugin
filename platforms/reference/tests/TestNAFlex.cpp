@@ -138,7 +138,7 @@ void simulateNeon()
     LangevinIntegrator integrator(163, 1, 0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
-    Platform &platform = Platform::getPlatformByName("CPU");
+    Platform &platform = Platform::getPlatformByName("Reference");
     Context context(system, integrator, platform);
     // printf("REMARK  Using OpenMM platform %s\n",
     //        context.getPlatform().getName().c_str());

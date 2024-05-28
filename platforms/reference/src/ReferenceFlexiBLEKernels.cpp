@@ -96,7 +96,7 @@ vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_VecMinus(vector<double> lh
     return result;
 }
 
-std::vector<double> Calc_VecSum(std::vector<double> lhs, std::vector<double> rhs)
+vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_VecSum(std::vector<double> lhs, std::vector<double> rhs)
 {
     vector<double> result;
     for (int i = 0; i < 3; i++)

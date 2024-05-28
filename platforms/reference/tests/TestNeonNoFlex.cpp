@@ -64,9 +64,9 @@ void simulateNeon()
     System system;
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    //CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
-    //system.addForce(exforce);
-    // Create three atoms.
+    // CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-0.511)^2; r=sqrt(x*x+y*y+z*z)");
+    // system.addForce(exforce);
+    //  Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
@@ -79,15 +79,15 @@ void simulateNeon()
             system.addParticle(20.1797);
         // charge, L-J sigma (nm), well depth (kJ)
         nonbond->addParticle(0.0, 0.2782, 0.298); // vdWRad(Ar)=.188 nm
-        //exforce->addParticle(a, vector<double>());
+        // exforce->addParticle(a, vector<double>());
     }
 
     VerletIntegrator integrator(0.004); // step size in ps
 
     // Let OpenMM Context choose best platform.
-    Context *context = new Context(system, integrator, Platform::getPlatformByName("CPU"));
+    Context *context = new Context(system, integrator, Platform::getPlatformByName("Reference"));
     printf("REMARK  Using OpenMM platform %s\n",
-            context->getPlatform().getName().c_str());
+           context->getPlatform().getName().c_str());
 
     // Set starting positions of the atoms. Leave time and velocity zero.
     context->setPositions(initPosInNm);
