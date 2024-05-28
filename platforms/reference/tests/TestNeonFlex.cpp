@@ -66,14 +66,17 @@ void simulateNeon()
     fstream data_out("Neon_Flex.txt", ios::out);
     // Create a system with nonbonded forces.
     System system;
+    CMMotionRemover *cmmr = new CMMotionRemover(1);
+    system.addForce(cmmr);
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
-    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-1.7)^2; r=sqrt(x*x+y*y+z*z)");
+    CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-2.7)^2; r=sqrt(x*x+y*y+z*z)");
     FlexiBLEForce *boundary = new FlexiBLEForce();
     vector<int> InputQMIndices = {0, 1, 3, 4, 14, 17, 29, 43, 44, 55, 84, 89, 92, 111, 125, 128, 140, 163, 170, 195};
+    vector<int> QMCOM = {0, 1, 3, 4, 14, 17, 29, 43, 44, 55, 84, 89, 92, 111, 125, 128, 140, 163, 170, 195};
     vector<int> CapQMIndices = {0, 1, 3, 4, 17, 29, 42, 43, 44, 84, 89, 92, 111, 125, 128, 140, 142, 163, 164, 170};
     vector<int> InputMLInfo = {200, 1};
-    vector<int> AssignedIndex = {0};
+    vector<int> AssignedIndex = {-1};
     vector<double> InputThre = {1e-5};
     vector<int> InputMaxIt = {10};
     vector<double> InputScales = {0.5};
@@ -90,7 +93,7 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetBoundaryType(0, CapsuleCOM);
+    boundary->SetBoundaryType(2, CapsuleCOM);
     // boundary->SetBoundaryType(2, line);
     // boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
@@ -98,14 +101,14 @@ void simulateNeon()
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
     // system.addForce(exforce);
-    //  Create three atoms.
+    //   Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
     {
         initPosInNm[a] = Vec3(NeonPositions[a][0], NeonPositions[a][1], NeonPositions[a][2]); // location, nm
         initVelocities[a] = Vec3(NeonVelocities[a][0], NeonVelocities[a][1], NeonVelocities[a][2]);
-        if (a == 0)
+        if (a == -1)
             system.addParticle(0.0); // mass of Neon, grams per mole
         else
             system.addParticle(20.1797);
@@ -114,7 +117,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    VerletIntegrator integrator(0.004); // step size in ps
+    VerletIntegrator integrator(0.001); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -132,7 +135,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 1000; frameNum++)
+    for (int frameNum = 1; frameNum <= 400; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

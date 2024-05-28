@@ -118,6 +118,7 @@ namespace FlexiBLE
         std::vector<double> IterScales;
         int CutoffMethod = 0;
         double T = 300;
+        double SystemTotalMass = 0.0;
         // double time_total = 0.0;
         // double find_replica = 0.0;
         // double produce_nodes = 0.0;
