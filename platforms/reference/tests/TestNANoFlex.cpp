@@ -113,7 +113,7 @@ void simulateNeon()
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
-    
+
     // printf("REMARK  Using OpenMM platform %s\n",
     //        context.getPlatform().getName().c_str());
 
@@ -131,6 +131,7 @@ void simulateNeon()
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
+        vector<Vec3> forces = state.getForces();
         const double timeInPs = state.getTime();
         double KE = state.getKineticEnergy();
         double PE = state.getPotentialEnergy();

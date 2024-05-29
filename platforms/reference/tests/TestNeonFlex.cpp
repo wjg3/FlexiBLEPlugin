@@ -95,7 +95,7 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetBoundaryType(2, CapsuleCOM);
+    boundary->SetBoundaryType(0, CapsuleCOM);
     // boundary->SetBoundaryType(2, line);
     // boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
@@ -111,7 +111,7 @@ void simulateNeon()
     {
         initPosInNm[a] = Vec3(NeonPositions[a][0], NeonPositions[a][1], NeonPositions[a][2]); // location, nm
         initVelocities[a] = Vec3(NeonVelocities[a][0], NeonVelocities[a][1], NeonVelocities[a][2]);
-        if (a == -1)
+        if (a == 0)
             system.addParticle(0.0); // mass of Neon, grams per mole
         else
             system.addParticle(20.1797);
@@ -138,10 +138,11 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 250; frameNum++)
+    for (int frameNum = 1; frameNum <= 1; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
+        vector<Vec3> forces = state.getForces();
         const double timeInPs = state.getTime();
         double KE = state.getKineticEnergy();
         double PE = state.getPotentialEnergy();

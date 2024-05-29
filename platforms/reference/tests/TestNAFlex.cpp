@@ -95,12 +95,13 @@ void simulateNeon()
     FlexiBLEForce *boundary = new FlexiBLEForce();
     vector<int> InputQMIndices = {0, 3, 14, 33, 52, 53, 65, 68, 83, 89, 117, 136, 143, 164, 165, 166, 182, 186, 189, 197};
     vector<int> InputMLInfo = {100, 1, 100, 1};
-    vector<int> AssignedIndex = {0, 0};
-    vector<double> InputThre = {0.1, 0.1};
+    vector<int> AssignedIndex = {-1, -1};
+    vector<double> InputThre = {1e-5, 1e-5};
     vector<int> InputMaxIt = {10, 10};
     vector<double> InputScales = {0.5, 0.5};
     vector<double> InputAlphas = {50.0, 50.0};
     vector<vector<double>> Centers = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    vector<vector<double>> Capsules = {{0.2, 0.0, 0.0}, {0.2, 0.0, 0.0}};
     boundary->SetQMIndices(InputQMIndices);
     boundary->SetMoleculeInfo(InputMLInfo);
     boundary->SetAssignedIndex(AssignedIndex);
@@ -109,12 +110,13 @@ void simulateNeon()
     boundary->SetFlexiBLEMaxIt(InputMaxIt);
     boundary->SetScales(InputScales);
     boundary->SetAlphas(InputAlphas);
-    boundary->SetBoundaryType(1, Centers);
+    boundary->SetBoundaryType(2, Capsules);
     boundary->SetTestOutput(1);
+    boundary->SetValOutput(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
     system.addForce(exforce);
-    // Create three atoms.
+    //  Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
     for (int a = 0; a < 200; a++)
@@ -135,8 +137,8 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    LangevinIntegrator integrator(163, 1, 0.001); // step size in ps
-
+    // LangevinIntegrator integrator(163, 1, 0.001); // step size in ps
+    VerletIntegrator integrator(0.004);
     // Let OpenMM Context choose best platform.
     Platform &platform = Platform::getPlatformByName("Reference");
     Context context(system, integrator, platform);
@@ -158,6 +160,7 @@ void simulateNeon()
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);
+        vector<Vec3> forces = state.getForces();
         const double timeInPs = state.getTime();
         double KE = state.getKineticEnergy();
         double PE = state.getPotentialEnergy();

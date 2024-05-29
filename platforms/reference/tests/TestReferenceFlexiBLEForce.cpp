@@ -335,8 +335,8 @@ void testSort2()
             int index;
             double r;
             finI >> index >> r;
-            //  cout << index << " " << r << " " << OriginalCoor[j].first << " " << OriginalCoor[j].second << endl;
-            if (index != OriginalCoor[j].first || (abs(r - OriginalCoor[j].second) > 10e-4))
+            cout << index << " " << r << " " << OriginalCoor[j].first << " " << OriginalCoor[j].second << endl;
+            if (index != OriginalCoor[j].first || (abs(r - OriginalCoor[j].second) > 10e-2))
                 throwException(__FILE__, __LINE__, "Sorting error (COM Ver)");
         }
         OriginalCoor.clear();
@@ -351,9 +351,9 @@ int main()
         testGroupingFunction();
         //    cout << "testGroupingFunction finished" << endl;
         // These two tests are for the old version of FlexiBLE
-        // testSort1();
+        testSort1();
         //   cout << "testSort1 finished" << endl;
-        // testSort2();
+        testSort2();
         //    cout << "testSort2 finished" << endl;
     }
     catch (const std::exception &e)

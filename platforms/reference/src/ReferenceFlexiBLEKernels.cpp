@@ -145,6 +145,8 @@ vector<double> ReferenceCalcFlexiBLEForceKernel::Calc_COM(vector<Vec3> Coordinat
             COMCoordinate[j] += Molecule.AtomMasses[i] * Coordinates[Molecule.Indices[i]][j];
         }
     }
+    if (totalMass == 0.0)
+        totalMass = 1.0;
     for (int i = 0; i < 3; i++)
         COMCoordinate[i] /= totalMass;
     return COMCoordinate;
@@ -163,14 +165,14 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         double TotalMassCurrent = 0.0;
         for (int i = 0; i < QMGroups.size(); i++)
         {
-            for (int j = 0; j < QMGroups[iGroup].size(); j++)
+            for (int j = 0; j < QMGroups[i].size(); j++)
             {
-                for (int k = 0; k < QMGroups[iGroup][j].Indices.size(); k++)
+                for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
                 {
-                    TotalMassCurrent += QMGroups[iGroup][j].AtomMasses[k];
+                    TotalMassCurrent += QMGroups[i][j].AtomMasses[k];
                     for (int l = 0; l < 3; l++)
                     {
-                        COM[l] += QMGroups[iGroup][j].AtomMasses[k] * Coordinates[QMGroups[iGroup][j].Indices[k]][l];
+                        COM[l] += QMGroups[i][j].AtomMasses[k] * Coordinates[QMGroups[i][j].Indices[k]][l];
                     }
                 }
             }
@@ -193,7 +195,7 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         for (int i = 0; i < 3; i++)
             COM[i] /= TotalMassCurrent;
 
-        SystemTotalMass = TotalMassCurrent; // Actually it's only the total mass for this kind of molecule
+        SystemTotalMass = TotalMassCurrent;
     }
     // Use center of mass as the spherical boundary center
     if (BoundaryShape == 0)
@@ -319,6 +321,8 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         double LMod = Calc_VecMod(LVec);
         vector<double> L1 = Calc_VecMinus(halfLVec, COM);
         vector<double> L2 = Calc_VecSum(COM, halfLVec);
+        // cout << L1[0] << " " << L1[1] << " " << L1[2] << endl;
+        // cout << L2[0] << " " << L2[1] << " " << L2[2] << endl;
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
             vector<double> pVec;
@@ -552,6 +556,8 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vect
             double totalMass = 0.0;
             for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
                 totalMass += QMGroups[iGroup][j].AtomMasses[n];
+            if (totalMass == 0.0)
+                totalMass = 1.0;
             vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
             for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
                 dCOM.emplace_back(QMGroups[iGroup][j].AtomMasses[n] / totalMass);
@@ -572,6 +578,8 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vect
             double totalMass = 0.0;
             for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
                 totalMass += MMGroups[iGroup][j].AtomMasses[n];
+            if (totalMass == 0.0)
+                totalMass = 1.0;
             vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
             for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
                 dCOM.emplace_back(MMGroups[iGroup][j].AtomMasses[n] / totalMass);
@@ -1159,7 +1167,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         }
                         else if (AtomDragged == -1)
                         {
-                            for (int n = 0; n < NAtoms; n++)
+                            for (int n = 0; n < QMGroups[i][j].Indices.size(); n++)
                             {
                                 int realIndex = QMGroups[i][j].Indices[n];
                                 Force[realIndex][k] += Coe * ForceList[j * NAtoms + n][k];
@@ -1175,7 +1183,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                         }
                         else if (AtomDragged == -1)
                         {
-                            for (int n = 0; n < NAtoms; n++)
+                            for (int n = 0; n < MMGroups[i][j - QMSize].Indices.size(); n++)
                             {
                                 int realIndex = MMGroups[i][j - QMSize].Indices[n];
                                 Force[realIndex][k] += Coe * ForceList[j * NAtoms + n][k];
@@ -1197,6 +1205,7 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 }
                 for (int j = 0; j < 3; j++)
                     fCOM[j] *= -1.0;
+
                 for (int iG = 0; iG < QMGroups.size(); iG++)
                 {
                     for (int j = 0; j < QMGroups[iG].size(); j++)
