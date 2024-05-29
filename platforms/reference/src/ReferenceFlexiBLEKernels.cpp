@@ -155,42 +155,64 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
     rCA.clear();
     rCA_Vec.clear();
     drCA.clear();
-    // Use center of mass as the spherical boundary center
-    if (BoundaryShape == 0)
+    // Calculate the COM if needed
+    if (BoundaryShape == 0 || BoundaryShape == 2)
     {
         COM = {0.0, 0.0, 0.0}; // Initialize it
         // Calculate the center of mass
         double TotalMassCurrent = 0.0;
-        for (int i = 0; i < QMGroups.size(); i++)
+        for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
-            for (int j = 0; j < QMGroups[i].size(); j++)
+            if (TargetAtom == -1)
             {
-                for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
+                for (int k = 0; k < QMGroups[iGroup][j].Indices.size(); k++)
                 {
-                    TotalMassCurrent += QMGroups[i][j].AtomMasses[k];
+                    TotalMassCurrent += QMGroups[iGroup][j].AtomMasses[k];
                     for (int l = 0; l < 3; l++)
                     {
-                        COM[l] += QMGroups[i][j].AtomMasses[k] * Coordinates[QMGroups[i][j].Indices[k]][l];
+                        COM[l] += QMGroups[iGroup][j].AtomMasses[k] * Coordinates[QMGroups[iGroup][j].Indices[k]][l];
                     }
                 }
             }
-            for (int j = 0; j < MMGroups[i].size(); j++)
+            else if (TargetAtom >= 0)
             {
-                for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
+                TotalMassCurrent += QMGroups[iGroup][j].AtomMasses[TargetAtom];
+                for (int l = 0; l < 3; l++)
                 {
-                    TotalMassCurrent += MMGroups[i][j].AtomMasses[k];
+                    COM[l] += QMGroups[iGroup][j].AtomMasses[TargetAtom] * Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l];
+                }
+            }
+        }
+        for (int j = 0; j < MMGroups[iGroup].size(); j++)
+        {
+            if (TargetAtom == -1)
+            {
+                for (int k = 0; k < MMGroups[iGroup][j].Indices.size(); k++)
+                {
+                    TotalMassCurrent += MMGroups[iGroup][j].AtomMasses[k];
                     for (int l = 0; l < 3; l++)
                     {
-                        COM[l] += MMGroups[i][j].AtomMasses[k] * Coordinates[MMGroups[i][j].Indices[k]][l];
+                        COM[l] += MMGroups[iGroup][j].AtomMasses[k] * Coordinates[MMGroups[iGroup][j].Indices[k]][l];
                     }
+                }
+            }
+            else if (TargetAtom >= 0)
+            {
+                TotalMassCurrent += MMGroups[iGroup][j].AtomMasses[TargetAtom];
+                for (int l = 0; l < 3; l++)
+                {
+                    COM[l] += MMGroups[iGroup][j].AtomMasses[TargetAtom] * Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l];
                 }
             }
         }
         for (int i = 0; i < 3; i++)
             COM[i] /= TotalMassCurrent;
 
-        SystemTotalMass = TotalMassCurrent;
-
+        SystemTotalMass = TotalMassCurrent; // Actually it's only the total mass for this kind of molecule
+    }
+    // Use center of mass as the spherical boundary center
+    if (BoundaryShape == 0)
+    {
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
             double R = 0.0;
@@ -304,40 +326,6 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
     // Use a capsule boundary defined by a line segment as the center, but the center of it is the COM.
     else if (BoundaryShape == 2)
     {
-        COM = {0.0, 0.0, 0.0}; // Initialize it
-
-        // Calculate the center of mass
-        double TotalMass = 0.0;
-        for (int i = 0; i < QMGroups.size(); i++)
-        {
-            for (int j = 0; j < QMGroups[i].size(); j++)
-            {
-                for (int k = 0; k < QMGroups[i][j].Indices.size(); k++)
-                {
-                    TotalMass += QMGroups[i][j].AtomMasses[k];
-                    for (int l = 0; l < 3; l++)
-                    {
-                        COM[l] += QMGroups[i][j].AtomMasses[k] * Coordinates[QMGroups[i][j].Indices[k]][l];
-                    }
-                }
-            }
-            for (int j = 0; j < MMGroups[i].size(); j++)
-            {
-                for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
-                {
-                    TotalMass += MMGroups[i][j].AtomMasses[k];
-                    for (int l = 0; l < 3; l++)
-                    {
-                        COM[l] += MMGroups[i][j].AtomMasses[k] * Coordinates[MMGroups[i][j].Indices[k]][l];
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < 3; i++)
-            COM[i] /= TotalMass;
-
-        SystemTotalMass = TotalMass;
-
         vector<double> LVec = {BoundaryParameters[iGroup][0], BoundaryParameters[iGroup][1], BoundaryParameters[iGroup][2]};
         vector<double> halfLVec;
         for (int i = 0; i < 3; i++)
@@ -561,7 +549,7 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
 void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vector<pair<int, double>> rCA, vector<vector<double>> rCA_Vec, vector<vector<double>> &drCA)
 {
     drCA.clear();
-    if (AtomDragged >= 0 && (BoundaryShape == 1 || BoundaryShape == 3))
+    if (AtomDragged >= 0)
     {
         for (int i = 0; i < rCA.size(); i++)
         {
@@ -571,25 +559,8 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vect
             drCA.emplace_back(gradient);
         }
     }
-    if (AtomDragged >= 0 && (BoundaryShape == 0 || BoundaryShape == 2))
-    {
-        for (int j = 0; j < QMGroups[iGroup].size(); j++)
-        {
-            vector<double> gradient;
-            for (int k = 0; k < 3; k++)
-                gradient.emplace_back((rCA_Vec[j][k] / rCA[j].second) * (1.0 - QMGroups[iGroup][j].AtomMasses[AtomDragged] / SystemTotalMass));
-            drCA.emplace_back(gradient);
-        }
-        for (int j = 0; j < MMGroups[iGroup].size(); j++)
-        {
-            vector<double> gradient;
-            for (int k = 0; k < 3; k++)
-                gradient.emplace_back((rCA_Vec[j + QMGroups[iGroup].size()][k] / rCA[j + QMGroups[iGroup].size()].second) * (1.0 - MMGroups[iGroup][j].AtomMasses[AtomDragged] / SystemTotalMass));
-            drCA.emplace_back(gradient);
-        }
-    }
 
-    else if (AtomDragged == -1 && (BoundaryShape == 1 || BoundaryShape == 3))
+    else if (AtomDragged == -1)
     {
         for (int j = 0; j < QMGroups[iGroup].size(); j++)
         {
@@ -619,49 +590,6 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_dr(int iGroup, int AtomDragged, vect
             vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
             for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
                 dCOM.emplace_back(MMGroups[iGroup][j].AtomMasses[n] / totalMass);
-            vector<double> gradient;
-            for (int k = 0; k < 3; k++)
-                gradient.emplace_back(rCA_Vec[j + QMGroups[iGroup].size()][k] / rCA[j + QMGroups[iGroup].size()].second);
-
-            for (int n = 0; n < dCOM.size(); n++)
-            {
-                vector<double> tempGrad;
-                for (int k = 0; k < 3; k++)
-                    tempGrad.emplace_back(gradient[k] * dCOM[n]);
-                drCA.emplace_back(tempGrad);
-            }
-        }
-    }
-    else if (AtomDragged == -1 && (BoundaryShape == 0 || BoundaryShape == 2))
-    {
-        for (int j = 0; j < QMGroups[iGroup].size(); j++)
-        {
-            double totalMass = 0.0;
-            for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
-                totalMass += QMGroups[iGroup][j].AtomMasses[n];
-            vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
-            for (int n = 0; n < QMGroups[iGroup][j].AtomMasses.size(); n++)
-                dCOM.emplace_back(QMGroups[iGroup][j].AtomMasses[n] / totalMass - QMGroups[iGroup][j].AtomMasses[n] / SystemTotalMass);
-            vector<double> gradient; // Store the part of dr/dx(COM-origin)
-            for (int k = 0; k < 3; k++)
-                gradient.emplace_back(rCA_Vec[j][k] / rCA[j].second);
-
-            for (int n = 0; n < dCOM.size(); n++)
-            {
-                vector<double> tempGrad;
-                for (int k = 0; k < 3; k++)
-                    tempGrad.emplace_back(gradient[k] * dCOM[n]);
-                drCA.emplace_back(tempGrad);
-            }
-        }
-        for (int j = 0; j < MMGroups[iGroup].size(); j++)
-        {
-            double totalMass = 0.0;
-            for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
-                totalMass += MMGroups[iGroup][j].AtomMasses[n];
-            vector<double> dCOM; // Store the derivative of dx(COM-origin)/dx(i)
-            for (int n = 0; n < MMGroups[iGroup][j].AtomMasses.size(); n++)
-                dCOM.emplace_back(MMGroups[iGroup][j].AtomMasses[n] / totalMass - MMGroups[iGroup][j].AtomMasses[n] / SystemTotalMass);
             vector<double> gradient;
             for (int k = 0; k < 3; k++)
                 gradient.emplace_back(rCA_Vec[j + QMGroups[iGroup].size()][k] / rCA[j + QMGroups[iGroup].size()].second);
@@ -1266,6 +1194,63 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                             {
                                 int realIndex = MMGroups[i][j - QMSize].Indices[n];
                                 Force[realIndex][k] += Coe * ForceList[j * NAtoms + n][k];
+                            }
+                        }
+                    }
+                }
+            }
+            // Get the COM force and apply it
+            if (BoundaryShape == 0 || BoundaryShape == 2)
+            {
+                vector<double> fCOM = {0.0, 0.0, 0.0};
+                for (int j = 0; j < ForceList.size(); j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        fCOM[k] += Coe * ForceList[j][k];
+                    }
+                }
+                for (int j = 0; j < 3; j++)
+                    fCOM[j] *= -1.0;
+
+                for (int j = 0; j < QMSize + MMSize; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        if (j < QMSize)
+                        {
+                            if (AtomDragged >= 0)
+                            {
+                                int realIndex = QMGroups[i][j].Indices[AtomDragged];
+                                double atomMass = QMGroups[i][j].AtomMasses[AtomDragged];
+                                Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
+                            }
+                            else if (AtomDragged == -1)
+                            {
+                                for (int n = 0; n < NAtoms; n++)
+                                {
+                                    int realIndex = QMGroups[i][j].Indices[n];
+                                    double atomMass = QMGroups[i][j].AtomMasses[n];
+                                    Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (AtomDragged >= 0)
+                            {
+                                int realIndex = MMGroups[i][j - QMSize].Indices[AtomDragged];
+                                double atomMass = MMGroups[i][j - QMSize].AtomMasses[AtomDragged];
+                                Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
+                            }
+                            else if (AtomDragged == -1)
+                            {
+                                for (int n = 0; n < NAtoms; n++)
+                                {
+                                    int realIndex = MMGroups[i][j - QMSize].Indices[n];
+                                    double atomMass = MMGroups[i][j - QMSize].AtomMasses[n];
+                                    Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
+                                }
                             }
                         }
                     }

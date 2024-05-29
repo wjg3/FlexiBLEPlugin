@@ -67,7 +67,7 @@ void simulateNeon()
     // Create a system with nonbonded forces.
     System system;
     CMMotionRemover *cmmr = new CMMotionRemover(1);
-    system.addForce(cmmr);
+    // system.addForce(cmmr);
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
     CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-2.7)^2; r=sqrt(x*x+y*y+z*z)");
@@ -77,7 +77,7 @@ void simulateNeon()
     vector<int> CapQMIndices = {0, 1, 3, 4, 17, 29, 42, 43, 44, 84, 89, 92, 111, 125, 128, 140, 142, 163, 164, 170};
     vector<int> InputMLInfo = {200, 1};
     vector<int> AssignedIndex = {-1};
-    vector<double> InputThre = {1e-5};
+    vector<double> InputThre = {1e-2};
     vector<int> InputMaxIt = {10};
     vector<double> InputScales = {0.5};
     vector<double> InputAlphas = {50.0};
@@ -85,6 +85,8 @@ void simulateNeon()
     vector<vector<double>> line = {{-0.1, 0.1}};
     vector<vector<double>> CapsuleCOM = {{0.4, 0.0, 0.0}};
     vector<vector<double>> Capsule = {{-0.2, 0.0, 0.0, 0.2, 0.0, 0.0}};
+    vector<vector<double>> calcCap = {{-0.1784315, 0.065847, -0.002068, 0.2215685, 0.065847, -0.002068}};
+    vector<vector<double>> calcCOM = {{0.0215685, 0.0658475, -0.002068}};
     boundary->SetQMIndices(CapQMIndices);
     boundary->SetMoleculeInfo(InputMLInfo);
     boundary->SetAssignedIndex(AssignedIndex);
@@ -97,10 +99,11 @@ void simulateNeon()
     // boundary->SetBoundaryType(2, line);
     // boundary->SetBoundaryType(3, Capsule);
     boundary->SetTestOutput(1);
+    boundary->SetValOutput(1);
     // boundary->SetCutoffMethod(1);
     boundary->SetTemperature(163.0);
     system.addForce(boundary);
-    // system.addForce(exforce);
+    system.addForce(exforce);
     //   Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
@@ -135,7 +138,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 400; frameNum++)
+    for (int frameNum = 1; frameNum <= 500; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

@@ -63,11 +63,11 @@ void simulateNeon()
     // Create a system with nonbonded forces.
     System system;
     CMMotionRemover *cmmr = new CMMotionRemover(1);
-    system.addForce(cmmr);
+    // system.addForce(cmmr);
     NonbondedForce *nonbond = new NonbondedForce();
     system.addForce(nonbond);
     CustomExternalForce *exforce = new CustomExternalForce("100*max(0, r-2.7)^2; r=sqrt(x*x+y*y+z*z)");
-    // system.addForce(exforce);
+    system.addForce(exforce);
     //    Create three atoms.
     vector<Vec3> initPosInNm(200);
     vector<Vec3> initVelocities(200);
