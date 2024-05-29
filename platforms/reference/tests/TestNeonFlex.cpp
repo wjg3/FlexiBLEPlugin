@@ -77,7 +77,7 @@ void simulateNeon()
     vector<int> CapQMIndices = {0, 1, 3, 4, 17, 29, 42, 43, 44, 84, 89, 92, 111, 125, 128, 140, 142, 163, 164, 170};
     vector<int> InputMLInfo = {200, 1};
     vector<int> AssignedIndex = {-1};
-    vector<double> InputThre = {1e-2};
+    vector<double> InputThre = {1e-5};
     vector<int> InputMaxIt = {10};
     vector<double> InputScales = {0.5};
     vector<double> InputAlphas = {50.0};
@@ -120,7 +120,7 @@ void simulateNeon()
         exforce->addParticle(a, vector<double>());
     }
 
-    VerletIntegrator integrator(0.001); // step size in ps
+    VerletIntegrator integrator(0.004); // step size in ps
 
     // Let OpenMM Context choose best platform.
     Context context(system, integrator);
@@ -138,7 +138,7 @@ void simulateNeon()
     // Simulate.
     remove("NeonFlex.pdb");
     remove("NeonFlexVel.txt");
-    for (int frameNum = 1; frameNum <= 500; frameNum++)
+    for (int frameNum = 1; frameNum <= 250; frameNum++)
     {
         // Output current state information.
         State state = context.getState(State::Positions | State::Forces | State::Energy | State::Velocities);

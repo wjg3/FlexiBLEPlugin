@@ -161,9 +161,9 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
         COM = {0.0, 0.0, 0.0}; // Initialize it
         // Calculate the center of mass
         double TotalMassCurrent = 0.0;
-        for (int j = 0; j < QMGroups[iGroup].size(); j++)
+        for (int i = 0; i < QMGroups.size(); i++)
         {
-            if (TargetAtom == -1)
+            for (int j = 0; j < QMGroups[iGroup].size(); j++)
             {
                 for (int k = 0; k < QMGroups[iGroup][j].Indices.size(); k++)
                 {
@@ -174,37 +174,22 @@ void ReferenceCalcFlexiBLEForceKernel::Calc_r(vector<pair<int, double>> &rCA, ve
                     }
                 }
             }
-            else if (TargetAtom >= 0)
-            {
-                TotalMassCurrent += QMGroups[iGroup][j].AtomMasses[TargetAtom];
-                for (int l = 0; l < 3; l++)
-                {
-                    COM[l] += QMGroups[iGroup][j].AtomMasses[TargetAtom] * Coordinates[QMGroups[iGroup][j].Indices[TargetAtom]][l];
-                }
-            }
         }
-        for (int j = 0; j < MMGroups[iGroup].size(); j++)
+        for (int i = 0; i < MMGroups.size(); i++)
         {
-            if (TargetAtom == -1)
+            for (int j = 0; j < MMGroups[i].size(); j++)
             {
-                for (int k = 0; k < MMGroups[iGroup][j].Indices.size(); k++)
+                for (int k = 0; k < MMGroups[i][j].Indices.size(); k++)
                 {
-                    TotalMassCurrent += MMGroups[iGroup][j].AtomMasses[k];
+                    TotalMassCurrent += MMGroups[i][j].AtomMasses[k];
                     for (int l = 0; l < 3; l++)
                     {
-                        COM[l] += MMGroups[iGroup][j].AtomMasses[k] * Coordinates[MMGroups[iGroup][j].Indices[k]][l];
+                        COM[l] += MMGroups[i][j].AtomMasses[k] * Coordinates[MMGroups[i][j].Indices[k]][l];
                     }
                 }
             }
-            else if (TargetAtom >= 0)
-            {
-                TotalMassCurrent += MMGroups[iGroup][j].AtomMasses[TargetAtom];
-                for (int l = 0; l < 3; l++)
-                {
-                    COM[l] += MMGroups[iGroup][j].AtomMasses[TargetAtom] * Coordinates[MMGroups[iGroup][j].Indices[TargetAtom]][l];
-                }
-            }
         }
+
         for (int i = 0; i < 3; i++)
             COM[i] /= TotalMassCurrent;
 
@@ -1212,45 +1197,32 @@ double ReferenceCalcFlexiBLEForceKernel::execute(ContextImpl &context, bool incl
                 }
                 for (int j = 0; j < 3; j++)
                     fCOM[j] *= -1.0;
-
-                for (int j = 0; j < QMSize + MMSize; j++)
+                for (int iG = 0; iG < QMGroups.size(); iG++)
                 {
-                    for (int k = 0; k < 3; k++)
+                    for (int j = 0; j < QMGroups[iG].size(); j++)
                     {
-                        if (j < QMSize)
+                        for (int k = 0; k < 3; k++)
                         {
-                            if (AtomDragged >= 0)
+                            for (int n = 0; n < QMGroups[iG][j].Indices.size(); n++)
                             {
-                                int realIndex = QMGroups[i][j].Indices[AtomDragged];
-                                double atomMass = QMGroups[i][j].AtomMasses[AtomDragged];
+                                int realIndex = QMGroups[iG][j].Indices[n];
+                                double atomMass = QMGroups[iG][j].AtomMasses[n];
                                 Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
-                            }
-                            else if (AtomDragged == -1)
-                            {
-                                for (int n = 0; n < NAtoms; n++)
-                                {
-                                    int realIndex = QMGroups[i][j].Indices[n];
-                                    double atomMass = QMGroups[i][j].AtomMasses[n];
-                                    Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
-                                }
                             }
                         }
-                        else
+                    }
+                }
+                for (int iG = 0; iG < MMGroups.size(); iG++)
+                {
+                    for (int j = 0; j < MMGroups[iG].size(); j++)
+                    {
+                        for (int k = 0; k < 3; k++)
                         {
-                            if (AtomDragged >= 0)
+                            for (int n = 0; n < MMGroups[iG][j].Indices.size(); n++)
                             {
-                                int realIndex = MMGroups[i][j - QMSize].Indices[AtomDragged];
-                                double atomMass = MMGroups[i][j - QMSize].AtomMasses[AtomDragged];
+                                int realIndex = MMGroups[iG][j].Indices[n];
+                                double atomMass = MMGroups[iG][j].AtomMasses[n];
                                 Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
-                            }
-                            else if (AtomDragged == -1)
-                            {
-                                for (int n = 0; n < NAtoms; n++)
-                                {
-                                    int realIndex = MMGroups[i][j - QMSize].Indices[n];
-                                    double atomMass = MMGroups[i][j - QMSize].AtomMasses[n];
-                                    Force[realIndex][k] += fCOM[k] * atomMass / SystemTotalMass;
-                                }
                             }
                         }
                     }
