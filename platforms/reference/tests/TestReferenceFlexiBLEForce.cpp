@@ -335,7 +335,7 @@ void testSort2()
             int index;
             double r;
             finI >> index >> r;
-            cout << index << " " << r << " " << OriginalCoor[j].first << " " << OriginalCoor[j].second << endl;
+            // cout << index << " " << r << " " << OriginalCoor[j].first << " " << OriginalCoor[j].second << endl;
             if (index != OriginalCoor[j].first || (abs(r - OriginalCoor[j].second) > 10e-2))
                 throwException(__FILE__, __LINE__, "Sorting error (COM Ver)");
         }
