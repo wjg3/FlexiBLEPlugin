@@ -3,7 +3,7 @@ An [OpenMM](https://github.com/openmm/openmm) plugin that implements the FlexiBL
 
 ## Intallation Instruction
 A little heads-up:  
-The plugin relies on Conda Environment to install.  
+The plugin relies on several packages to install, will be easy to configure with Conda.  
 The key software packages include: 
 
     OpenMM         8.0.0 and higher (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
