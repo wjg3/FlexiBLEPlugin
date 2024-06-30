@@ -6,9 +6,9 @@ A little heads-up:
 The plugin relies on several packages to install, will be easy to configure with Conda.  
 The key software packages include: 
 
-    OpenMM         8.0.0 and higher (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
-    CMake          3.27.6  
-    gcc_linux-64 >=11  
+    OpenMM             8.0.0 and higher (7.3.0 works when changing LangevinMiddleIntegrator to LangevinIntegrator in tests) 
+    CMake              3.27.6 (older versions may work, but need to modify the CMakeList.txt) 
+    gcc_linux-64/gcc   (gcc-7,8,11 have all been tested, intel/2017 compiler can work, others are not guaranteed)
 
 CUDA and OpenCL are not supported for this plugin.  
 Python APIs not configured yet. 
